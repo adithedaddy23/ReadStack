@@ -1,6 +1,5 @@
-package com.example.readstack.api.roomdatabase
+package com.example.readstack.roomdatabase
 
-import android.icu.text.CaseMap.Title
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 

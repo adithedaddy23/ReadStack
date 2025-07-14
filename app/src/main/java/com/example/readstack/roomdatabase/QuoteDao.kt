@@ -1,4 +1,4 @@
-package com.example.readstack.api.roomdatabase
+package com.example.readstack.roomdatabase
 
 import androidx.room.Dao
 import androidx.room.Insert

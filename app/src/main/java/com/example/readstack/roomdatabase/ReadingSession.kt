@@ -1,4 +1,4 @@
-package com.example.readstack.api.roomdatabase
+package com.example.readstack.roomdatabase
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

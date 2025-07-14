@@ -9,29 +9,31 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
-
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+val LightColorScheme = lightColorScheme(
+    primary = Color(0xFF4A6C6F),
     onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    secondary = Color(0xFF7D8C8F),
+    background = Color(0xFFF9F9F9),
+    surface = Color.White,
+    error = Color(0xFFCC5C5C),
+    onBackground = Color(0xFF1A1A1A),
+    onSurface = Color(0xFF1A1A1A),
 )
+
+val DarkColorScheme = darkColorScheme(
+    primary = Color(0xFF9ACFD0),
+    onPrimary = Color.Black,
+    secondary = Color(0xFFBFC9CC),
+    background = Color(0xFF121212),
+    surface = Color(0xFF1E1E1E),
+    error = Color(0xFFFF9999),
+    onBackground = Color(0xFFEDEDED),
+    onSurface = Color(0xFFEDEDED),
+)
+
 
 @Composable
 fun ReadStackTheme(
