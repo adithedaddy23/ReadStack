@@ -1,3 +1,5 @@
+package com.example.readstack.api
+
 data class ApiResponse(
     val docs: List<Doc>,
     val documentation_url: String,

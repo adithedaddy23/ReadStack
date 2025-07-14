@@ -1,3 +1,5 @@
+package com.example.readstack.api
+
 data class Doc(
     val author_key: List<String>,
     val author_name: List<String>,
