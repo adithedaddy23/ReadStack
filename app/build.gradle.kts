@@ -7,7 +7,7 @@ plugins {
 
 android {
     namespace = "com.example.readstack"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.example.readstack"
@@ -58,6 +58,7 @@ dependencies {
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
 //    implementation(libs.androidx.appcompat) // Updated version
 
     val room_version = "2.7.2"

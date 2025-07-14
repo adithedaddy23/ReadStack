@@ -8,8 +8,8 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 
-@Database(entities = [Book::class, ReadingSession::class, Quote::class], version = 1, exportSchema = false)
-@TypeConverters(TagsConverter::class)
+@Database(entities = [Book::class, ReadingSession::class, Quote::class], version = 2, exportSchema = false)
+@TypeConverters(TagsConverter::class, DateTimeConverter::class)
 abstract class ReadStackDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao
     abstract fun readingSessionDao(): ReadingSessionDao
@@ -26,10 +26,11 @@ abstract class ReadStackDatabase : RoomDatabase() {
                     context.applicationContext,
                     ReadStackDatabase::class.java,
                     "readstack_database"
-                ).build()
+                )
+                    .fallbackToDestructiveMigration() // Add this for version upgrade
+                    .build()
                 INSTANCE = instance
                 instance
-
             }
         }
     }

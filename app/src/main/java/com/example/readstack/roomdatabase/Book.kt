@@ -11,5 +11,6 @@ data class Book(
     val coverUrl: String?,
     val shelf: String,
     val totalPages: Int,
-    val currentPage: Int = 0
+    val currentPage: Int = 0,
+    val updatedAt: Long = System.currentTimeMillis()
 )

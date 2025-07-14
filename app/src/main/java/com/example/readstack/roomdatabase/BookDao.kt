@@ -17,6 +17,6 @@ interface BookDao {
     @Update
     suspend fun updateBook(book: Book)
 
-    @Query("SELECT * FROM books WHERE shelf = 'finished' AND strftime('%Y-%m', 'now') = strftime('%Y-%m', updated_at)")
-    suspend fun getBooksReadThisMonth() : List<Book>
+    @Query("SELECT * FROM books WHERE shelf = 'finished' AND strftime('%Y-%m', datetime(updatedAt/1000, 'unixepoch')) = strftime('%Y-%m', 'now')")
+    suspend fun getBooksReadThisMonth(): List<Book>
 }
