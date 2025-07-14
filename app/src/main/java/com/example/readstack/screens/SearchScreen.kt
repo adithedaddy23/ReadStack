@@ -14,21 +14,28 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.example.readstack.api.ApiResponse
+import com.example.readstack.api.NetworkResponseClass
 import com.example.readstack.viewmodel.BookViewModel
 
 @Composable
@@ -39,7 +46,7 @@ fun SearchScreen(
 
     var book by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
-
+    val bookResult = bookViewModel.bookResult.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -86,7 +93,51 @@ fun SearchScreen(
                     }
                 ),
             )
+
+            when (val result = bookResult.value) {
+                is NetworkResponseClass.loading -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 48.dp)
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Searching books...")
+                    }
+                }
+
+                is NetworkResponseClass.Error -> {
+                    if(result.message.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 24.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Text(
+                                text = result.message,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+
+                }
+
+                is NetworkResponseClass.Success -> {
+                    BookDetails(data = result.data)
+                }
+            }
         }
 
     }
+}
+
+@Composable
+fun BookDetails(data: ApiResponse) {
+
 }
