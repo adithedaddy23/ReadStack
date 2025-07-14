@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class BookViewModel: ViewModel() {
-    private val bookApiViewModel = RetrofitInstance.bookApi
+    private val bookApi = RetrofitInstance.bookApi
     private val _bookResult = MutableStateFlow<NetworkResponseClass<ApiResponse>>(NetworkResponseClass.Error(""))
     val bookResult : StateFlow<NetworkResponseClass<ApiResponse>> = _bookResult
 
@@ -19,7 +19,7 @@ class BookViewModel: ViewModel() {
         _bookResult.value = NetworkResponseClass.loading
         viewModelScope.launch {
             try {
-                val response = bookApiViewModel.searchBooks(name,20);
+                val response = bookApi.searchBooks(name,20);
                 _bookResult.value = NetworkResponseClass.Success(response)
             } catch (e: Exception) {
                 _bookResult.value = NetworkResponseClass.Error(e.message.toString())
