@@ -2,6 +2,7 @@ package com.example.readstack.screens
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -20,6 +22,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,15 +45,23 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RenderEffect
+import androidx.compose.ui.graphics.Shader
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
@@ -61,6 +72,9 @@ import com.example.readstack.api.ApiResponse
 import com.example.readstack.api.Doc
 import com.example.readstack.api.NetworkResponseClass
 import com.example.readstack.viewmodel.BookViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 
 @Composable
 fun SearchScreen(
@@ -170,10 +184,10 @@ fun BookDetails(data: ApiResponse) {
             .background(MaterialTheme.colorScheme.background)
     ) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2), // Creates a grid with 2 columns
-            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            columns = GridCells.Fixed(2),
+            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier.fillMaxSize()
         ) {
             items(data.docs) { book ->
@@ -188,24 +202,25 @@ fun BookDetails(data: ApiResponse) {
 
 @Composable
 fun ModernBookItem(book: Doc, modifier: Modifier = Modifier) {
-    Column(
+    val hazeState = remember { HazeState() }
+    Card(
         modifier = modifier
-            .padding(8.dp)
-            .width(140.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+            .padding(2.dp)
+            .width(200.dp)
+            .height(320.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
-        val imageUrl = if (book.cover_i != null) {
-            "https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg"
-        } else null
-
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(0.7f),
-            shape = RoundedCornerShape(12.dp),
-            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        Box(
+            modifier = Modifier.fillMaxSize()
         ) {
+            // Background Image covering the entire card
+            val imageUrl = if (book.cover_i != null) {
+                "https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg"
+            } else null
+
             if (imageUrl != null) {
                 val painter = rememberAsyncImagePainter(
                     model = ImageRequest.Builder(LocalContext.current)
@@ -215,92 +230,158 @@ fun ModernBookItem(book: Doc, modifier: Modifier = Modifier) {
                         .build()
                 )
 
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Image(
-                        painter = painter,
-                        contentDescription = book.title,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-
-                    // Show progress indicator only briefly
-                    if (painter.state is AsyncImagePainter.State.Loading) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .alpha(0.7f)
+                Image(
+                    painter = painter,
+                    contentDescription = book.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clip(RoundedCornerShape(16.dp))
+                        .haze(
+                            hazeState,
+                            backgroundColor = MaterialTheme.colorScheme.background,
+                            tint = Color.Black.copy(alpha = .1f),
+                            blurRadius = 12.dp,
                         )
-                    } else if (painter.state is AsyncImagePainter.State.Error) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.image),
-                                contentDescription = "Image not available",
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(40.dp)
-                            )
-                            Text(
-                                text = "Image not available",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.error,
-                                textAlign = TextAlign.Center
-                            )
-                        }
+                )
+
+                // Loading state
+                if (painter.state is AsyncImagePainter.State.Loading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
+                                RoundedCornerShape(16.dp)
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 2.dp
+                        )
                     }
                 }
+                // Error state
+                else if (painter.state is AsyncImagePainter.State.Error) {
+                    ModernPlaceholderContent()
+                }
             } else {
+                ModernPlaceholderContent()
+            }
+
+            // Frosted glass overlay at the bottom
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(80.dp) // Fixed height for better control
+                    .align(Alignment.BottomCenter)
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 0.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp
+                        )
+                    )
+                    .hazeChild(
+                        state = hazeState,
+                        shape = RoundedCornerShape(
+                            topStart = 0.dp,
+                            topEnd = 0.dp,
+                            bottomStart = 16.dp,
+                            bottomEnd = 16.dp
+                        )
+                    )
+//                    .background(
+//                        Color.Black.copy(alpha = 0.3f), // Semi-transparent overlay
+//                        RoundedCornerShape(
+//                            topStart = 0.dp,
+//                            topEnd = 0.dp,
+//                            bottomStart = 16.dp,
+//                            bottomEnd = 16.dp
+//                        )
+//                    )
+            ) {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                        .padding(12.dp),
+                    horizontalAlignment = Alignment.Start,
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    Icon(
-                        painter = painterResource(R.drawable.image),
-                        contentDescription = "Image not available",
-                        tint = MaterialTheme.colorScheme.error,
-                        modifier = Modifier.size(40.dp)
-                    )
+                    // Book Title
                     Text(
-                        text = "Image not available",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.error,
-                        textAlign = TextAlign.Center
+                        text = book.title,
+                        style = MaterialTheme.typography.titleSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 16.sp
+                        ),
+                        color = Color.White,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis
                     )
+
+                    // Author Name
+                    if (!book.author_name.isNullOrEmpty()) {
+                        Text(
+                            text = book.author_name.joinToString(", "),
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Normal,
+                                letterSpacing = 0.25.sp
+                            ),
+                            color = Color.White.copy(alpha = 0.8f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
                 }
             }
-        }
-
-        Text(
-            text = book.title,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 4.dp)
-        )
-
-        if (!book.author_name.isNullOrEmpty()) {
-            Text(
-                text = book.author_name.joinToString(", "),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(horizontal = 4.dp)
-            )
         }
     }
 }
 
+@Composable
+private fun ModernPlaceholderContent() {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                MaterialTheme.colorScheme.surfaceVariant,
+                RoundedCornerShape(16.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Modern icon with circular background
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                        CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(R.drawable.image),
+                    contentDescription = "No image available",
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            Text(
+                text = "No Cover",
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+}

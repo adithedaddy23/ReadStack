@@ -16,67 +16,67 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 
 val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF4A6C6F),
-    onPrimary = Color(0xFFFFFFFF),
-    primaryContainer = Color(0xFFD0E8EA),
-    onPrimaryContainer = Color(0xFF002022),
+    primary = Color(0xFF3B5F64), // Slightly darker, richer teal for better contrast
+    onPrimary = Color(0xFFFFFFFF), // White for max contrast
+    primaryContainer = Color(0xFFC2E0E3), // Lighter, more distinct container
+    onPrimaryContainer = Color(0xFF001F22), // Darker for readability
 
-    secondary = Color(0xFF7D8C8F),
+    secondary = Color(0xFF6A7D80), // Cooler, more distinct secondary
     onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFDDE5E7),
-    onSecondaryContainer = Color(0xFF192022),
+    secondaryContainer = Color(0xFFD1E3E6), // Lighter, more neutral
+    onSecondaryContainer = Color(0xFF1A2C2F), // Darker for contrast
 
-    tertiary = Color(0xFFD37A5B), // Pronouncing accent color
+    tertiary = Color(0xFFCB6848), // Brighter, warmer accent for distinction
     onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFFFDBCF),
-    onTertiaryContainer = Color(0xFF3A0800),
+    tertiaryContainer = Color(0xFFFFD2C6), // Softer, distinct container
+    onTertiaryContainer = Color(0xFF330B00), // Darker for readability
 
-    error = Color(0xFFBA1A1A),
+    error = Color(0xFFB00020), // Vivid red for errors
     onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFFFDAD6),
-    onErrorContainer = Color(0xFF410002),
+    errorContainer = Color(0xFFFFCDD2), // Softer error background
+    onErrorContainer = Color(0xFF3C0008),
 
-    background = Color(0xFFF8FAFA),
-    onBackground = Color(0xFF191C1C),
+    background = Color(0xFFF7F9F9), // Slightly warmer neutral
+    onBackground = Color(0xFF171A1A), // High contrast
 
-    surface = Color(0xFFF8FAFA),
-    onSurface = Color(0xFF191C1C),
-    surfaceVariant = Color(0xFFDAE4E5), // For cards, chips, etc.
-    onSurfaceVariant = Color(0xFF3F4849),
+    surface = Color(0xFFF7F9F9), // Matches background
+    onSurface = Color(0xFF171A1A),
+    surfaceVariant = Color(0xFFD5E2E4), // Cooler variant for cards
+    onSurfaceVariant = Color(0xFF3A4647), // High contrast
 
-    outline = Color(0xFF6F797A) // For borders and dividers
+    outline = Color(0xFF6A7778) // Subtle, distinct outline
 )
 
 val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFF9ACFD0),
-    onPrimary = Color(0xFF00373A),
-    primaryContainer = Color(0xFF314F52),
-    onPrimaryContainer = Color(0xFFD0E8EA),
+    primary = Color(0xFFA3D5D8), // Lighter, more vibrant teal
+    onPrimary = Color(0xFF002F33), // Darker for contrast
+    primaryContainer = Color(0xFF2A474B), // Richer container
+    onPrimaryContainer = Color(0xFFC2E0E3), // Matches light theme container
 
-    secondary = Color(0xFFBFC9CC),
-    onSecondary = Color(0xFF1F3336),
-    secondaryContainer = Color(0xFF36484B),
-    onSecondaryContainer = Color(0xFFDDE5E7),
+    secondary = Color(0xFFB8CED1), // Lighter, cooler secondary
+    onSecondary = Color(0xFF1B2E31), // Darker for contrast
+    secondaryContainer = Color(0xFF324447), // Distinct container
+    onSecondaryContainer = Color(0xFFD1E3E6),
 
-    tertiary = Color(0xFFE9B5A0), // Pronouncing accent color
-    onTertiary = Color(0xFF5A1D0C),
-    tertiaryContainer = Color(0xFF773320),
-    onTertiaryContainer = Color(0xFFFFDBCF),
+    tertiary = Color(0xFFE5A590), // Warmer, brighter accent
+    onTertiary = Color(0xFF4F1708), // Darker for readability
+    tertiaryContainer = Color(0xFF6E2C1A), // Richer container
+    onTertiaryContainer = Color(0xFFFFD2C6),
 
-    error = Color(0xFFFFB4AB),
-    onError = Color(0xFF690005),
-    errorContainer = Color(0xFF93000A),
-    onErrorContainer = Color(0xFFFFDAD6),
+    error = Color(0xFFF28B82), // Softer, distinct error
+    onError = Color(0xFF5C0010),
+    errorContainer = Color(0xFF8B0022),
+    onErrorContainer = Color(0xFFFFCDD2),
 
-    background = Color(0xFF191C1C),
-    onBackground = Color(0xFFE1E3E3),
+    background = Color(0xFF141717), // Slightly warmer dark
+    onBackground = Color(0xFFDEE0E0), // High contrast
 
-    surface = Color(0xFF191C1C),
-    onSurface = Color(0xFFE1E3E3),
-    surfaceVariant = Color(0xFF3F4849), // For cards, chips, etc.
-    onSurfaceVariant = Color(0xFFBFC8C9),
+    surface = Color(0xFF141717), // Matches background
+    onSurface = Color(0xFFDEE0E0),
+    surfaceVariant = Color(0xFF3A4647), // Matches light theme variant
+    onSurfaceVariant = Color(0xFFB8C4C6), // High contrast
 
-    outline = Color(0xFF899293) // For borders and dividers
+    outline = Color(0xFF849091) // Brighter, distinct outline
 )
 
 
