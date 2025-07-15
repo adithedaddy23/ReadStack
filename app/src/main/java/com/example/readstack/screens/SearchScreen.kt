@@ -1,8 +1,10 @@
 package com.example.readstack.screens
 
+import android.net.Uri
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -62,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
@@ -167,7 +170,7 @@ fun SearchScreen(
                 }
 
                 is NetworkResponseClass.Success -> {
-                    BookDetails(data = result.data)
+                    BookDetails(data = result.data, navController = navController)
                 }
             }
         }
@@ -176,7 +179,7 @@ fun SearchScreen(
 }
 
 @Composable
-fun BookDetails(data: ApiResponse) {
+fun BookDetails(data: ApiResponse,navController: NavController) {
     Spacer(Modifier.height(16.dp))
     Box(
         modifier = Modifier
@@ -191,7 +194,7 @@ fun BookDetails(data: ApiResponse) {
             modifier = Modifier.fillMaxSize()
         ) {
             items(data.docs) { book ->
-                ModernBookItem(book = book)
+                ModernBookItem(book = book, navController = navController)
             }
         }
 
@@ -201,13 +204,27 @@ fun BookDetails(data: ApiResponse) {
 
 
 @Composable
-fun ModernBookItem(book: Doc, modifier: Modifier = Modifier) {
+fun ModernBookItem(
+    book: Doc,
+    modifier: Modifier = Modifier,
+    navController: NavController,
+) {
     val hazeState = remember { HazeState() }
+
     Card(
         modifier = modifier
             .padding(2.dp)
             .width(200.dp)
-            .height(320.dp),
+            .height(320.dp)
+            .clickable {
+                println("DEBUG: Book key before encoding: ${book.key}")
+                val encodedKey = Uri.encode(book.key)
+                println("DEBUG: Book key after encoding: $encodedKey")
+                val route = "book_detail/$encodedKey"
+                println("DEBUG: Navigation route: $route")
+
+                navController.navigate(route)
+            },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
@@ -275,7 +292,7 @@ fun ModernBookItem(book: Doc, modifier: Modifier = Modifier) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp) // Fixed height for better control
+                    .height(80.dp)
                     .align(Alignment.BottomCenter)
                     .clip(
                         RoundedCornerShape(
@@ -294,15 +311,6 @@ fun ModernBookItem(book: Doc, modifier: Modifier = Modifier) {
                             bottomEnd = 16.dp
                         )
                     )
-//                    .background(
-//                        Color.Black.copy(alpha = 0.3f), // Semi-transparent overlay
-//                        RoundedCornerShape(
-//                            topStart = 0.dp,
-//                            topEnd = 0.dp,
-//                            bottomStart = 16.dp,
-//                            bottomEnd = 16.dp
-//                        )
-//                    )
             ) {
                 Column(
                     modifier = Modifier

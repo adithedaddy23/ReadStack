@@ -29,6 +29,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.readstack.navigation.BottomNavIcon
 import com.example.readstack.navigation.getBottomNavItems
 import com.example.readstack.screens.AnalyticsScreen
+import com.example.readstack.screens.BookDetailScreen
 import com.example.readstack.screens.MyBooksScreen
 import com.example.readstack.screens.SearchScreen
 import com.example.readstack.viewmodel.BookViewModel
@@ -58,6 +59,12 @@ fun AppNavigation(
                     bookViewModel = bookViewModel
                 )
             }
+            composable("book_detail/{workKey}") { backStackEntry ->
+                val workKey = backStackEntry.arguments?.getString("workKey") ?: return@composable
+                BookDetailScreen(workKey = workKey, viewModel = bookViewModel, navController = navController)
+            }
+
+
         }
     }
 }
