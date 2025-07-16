@@ -3,6 +3,7 @@ package com.example.readstack.screens
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -19,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -33,6 +35,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +53,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
+import coil.request.CachePolicy
 import coil.request.ImageRequest
 import com.example.readstack.R
 import com.example.readstack.roomdatabase.Book
@@ -65,9 +69,9 @@ fun MyBooksScreen(
     bookStorageViewModel: BookStorageViewModel,
     hazeState: HazeState
 ) {
-    val currentlyReadingBooks = bookStorageViewModel.getBooksByShelf("currently_reading").collectAsState()
-    val finishedBooks = bookStorageViewModel.getBooksByShelf("finished").collectAsState()
-    val wantToReadBooks = bookStorageViewModel.getBooksByShelf("want_to_read").collectAsState()
+    val currentlyReadingBooks by bookStorageViewModel.currentlyReadingBooks.collectAsState()
+    val finishedBooks by bookStorageViewModel.finishedBooks.collectAsState()
+    val wantToReadBooks by bookStorageViewModel.wantToReadBooks.collectAsState()
 
     LazyColumn(
         modifier = Modifier
@@ -99,9 +103,9 @@ fun MyBooksScreen(
 
         // Currently Reading Section
         item {
-            BookShelfSection(
+            OptimizedBookShelfSection(
                 title = "Currently Reading",
-                books = currentlyReadingBooks.value,
+                books = currentlyReadingBooks,
                 onBookClick = { book ->
                     navController.navigate("book_detail/${book.id}")
                 },
@@ -112,9 +116,9 @@ fun MyBooksScreen(
 
         // Want to Read Section
         item {
-            BookShelfSection(
+            OptimizedBookShelfSection(
                 title = "Want to Read",
-                books = wantToReadBooks.value,
+                books = wantToReadBooks,
                 onBookClick = { book ->
                     navController.navigate("book_detail/${book.id}")
                 },
@@ -125,9 +129,9 @@ fun MyBooksScreen(
 
         // Finished Section
         item {
-            BookShelfSection(
+            OptimizedBookShelfSection(
                 title = "Finished",
-                books = finishedBooks.value,
+                books = finishedBooks,
                 onBookClick = { book ->
                     navController.navigate("book_detail/${book.id}")
                 },
@@ -139,7 +143,7 @@ fun MyBooksScreen(
 }
 
 @Composable
-private fun BookShelfSection(
+private fun OptimizedBookShelfSection(
     title: String,
     books: List<Book>,
     onBookClick: (Book) -> Unit,
@@ -201,27 +205,33 @@ private fun BookShelfSection(
         if (books.isEmpty()) {
             EmptyShelfMessage(title = title)
         } else {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(horizontal = 4.dp)
+            // Use regular Row with horizontal scroll instead of LazyRow
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(books) { book ->
-                    ModernBookItem(
+                Spacer(modifier = Modifier.width(4.dp))
+                books.forEach { book ->
+                    OptimizedBookItem(
                         book = book,
                         onClick = { onBookClick(book) }
                     )
                 }
+                Spacer(modifier = Modifier.width(4.dp))
             }
         }
     }
 }
 
 @Composable
-private fun ModernBookItem(
+private fun OptimizedBookItem(
     book: Book,
     onClick: () -> Unit
 ) {
-    val hazeState = remember { HazeState() }
+    // Create a stable hazeState that's remembered per book
+    val hazeState = remember(book.id) { HazeState() }
 
     Card(
         onClick = onClick,
@@ -233,13 +243,15 @@ private fun ModernBookItem(
         Box(
             modifier = Modifier.fillMaxSize()
         ) {
-            // Background Image
+            // Background Image - Fixed loading logic
             if (book.coverUrl != null) {
                 val painter = rememberAsyncImagePainter(
                     model = ImageRequest.Builder(LocalContext.current)
                         .data(book.coverUrl)
                         .crossfade(true)
                         .error(R.drawable.image)
+                        .memoryCachePolicy(CachePolicy.ENABLED)
+                        .diskCachePolicy(CachePolicy.ENABLED)
                         .build()
                 )
 
@@ -257,6 +269,7 @@ private fun ModernBookItem(
                         )
                 )
 
+                // Loading indicator overlay
                 if (painter.state is AsyncImagePainter.State.Loading) {
                     Box(
                         modifier = Modifier
@@ -270,11 +283,14 @@ private fun ModernBookItem(
                             strokeWidth = 2.dp
                         )
                     }
-                } else if (painter.state is AsyncImagePainter.State.Error) {
-                    ModernBookPlaceholder()
+                }
+
+                // Error state overlay
+                if (painter.state is AsyncImagePainter.State.Error) {
+                    ModernBookPlaceholder(modifier = Modifier.fillMaxSize())
                 }
             } else {
-                ModernBookPlaceholder()
+                ModernBookPlaceholder(modifier = Modifier.fillMaxSize())
             }
 
             // Frosted Glass Overlay for Text
@@ -313,7 +329,6 @@ private fun ModernBookItem(
                     )
 
                     Spacer(modifier = Modifier.height(4.dp))
-
                 }
             }
 
@@ -350,11 +365,12 @@ private fun ModernBookItem(
     }
 }
 
+
+
 @Composable
-private fun ModernBookPlaceholder() {
+private fun ModernBookPlaceholder(modifier: Modifier = Modifier) {
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = modifier
             .background(
                 Brush.verticalGradient(
                     colors = listOf(
@@ -419,35 +435,6 @@ private fun EmptyShelfMessage(title: String) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
                 textAlign = TextAlign.Center
-            )
-        }
-    }
-}
-
-@Composable
-private fun ModernPlaceholderContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "No Image",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "No Cover Available",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
             )
         }
     }

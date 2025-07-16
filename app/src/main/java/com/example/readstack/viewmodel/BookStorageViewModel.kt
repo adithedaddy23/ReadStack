@@ -8,7 +8,9 @@ import com.example.readstack.api.RetrofitInstance
 import com.example.readstack.roomdatabase.Book
 import com.example.readstack.roomdatabase.BookDao
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import okhttp3.Response
 
@@ -40,6 +42,27 @@ class BookStorageViewModel(
 
     private val _storageResult = MutableStateFlow(BookStorageResult(BookStorageResult.Status.SUCCESS, null))
     val storageResult: StateFlow<BookStorageResult> = _storageResult
+
+    val currentlyReadingBooks: StateFlow<List<Book>> = bookDao.getBooksByShelf("currently_reading")
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000), // Keeps the stream alive for 5s after the UI stops listening
+            initialValue = emptyList() // The list is empty at the very beginning
+        )
+
+    val wantToReadBooks: StateFlow<List<Book>> = bookDao.getBooksByShelf("want_to_read")
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val finishedBooks: StateFlow<List<Book>> = bookDao.getBooksByShelf("finished")
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
 
     fun saveBookFromApi(workKey: String, shelf: String) {
         viewModelScope.launch {
@@ -83,37 +106,21 @@ class BookStorageViewModel(
     fun updateBookShelf(bookId: String, newShelf: String) {
         viewModelScope.launch {
             try {
-                // Get existing book
-                val book = bookDao.getBooksByShelf(bookId).firstOrNull()
-                    ?: throw IllegalStateException("Book not found")
+                val book = bookDao.getBookById(bookId)
+                    ?: throw IllegalStateException("Book with id $bookId not found")
 
-                // Update shelf
                 val updatedBook = book.copy(
                     shelf = newShelf,
                     updatedAt = System.currentTimeMillis()
                 )
-
                 bookDao.updateBook(updatedBook)
                 _storageResult.value = BookStorageResult(BookStorageResult.Status.SUCCESS, "Shelf updated successfully")
-
             } catch (e: Exception) {
                 _storageResult.value = BookStorageResult(BookStorageResult.Status.ERROR, "Failed to update shelf: ${e.message}")
             }
         }
     }
 
-    fun getBooksByShelf(shelf: String): StateFlow<List<Book>> {
-        val booksFlow = MutableStateFlow<List<Book>>(emptyList())
-        viewModelScope.launch {
-            try {
-                val books = bookDao.getBooksByShelf(shelf)
-                booksFlow.value = books
-            } catch (e: Exception) {
-                _storageResult.value = BookStorageResult(BookStorageResult.Status.ERROR, "Failed to fetch books: ${e.message}")
-            }
-        }
-        return booksFlow
-    }
 }
 
 class BookStorageViewModelFactory(

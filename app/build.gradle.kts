@@ -68,6 +68,9 @@ dependencies {
     // Lifecycle for viewModelScope and stateIn
     implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
 
+    implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0") // or latest version
+
+
     val room_version = "2.7.2"
 
     implementation("androidx.room:room-runtime:$room_version")
