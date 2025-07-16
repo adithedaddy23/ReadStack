@@ -217,13 +217,8 @@ fun ModernBookItem(
             .width(200.dp)
             .height(320.dp)
             .clickable {
-                println("DEBUG: Book key before encoding: ${book.key}")
-                val encodedKey = Uri.encode(book.key)
-                println("DEBUG: Book key after encoding: $encodedKey")
-                val route = "book_detail/$encodedKey"
-                println("DEBUG: Navigation route: $route")
-
-                navController.navigate(route)
+                val cleanWorkKey = book.key?.replace("/works/", "") ?: ""
+                navController.navigate("bookDetail/$cleanWorkKey")
             },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(

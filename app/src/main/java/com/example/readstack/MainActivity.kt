@@ -53,6 +53,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.readstack.roomdatabase.ReadStackDatabase
 import com.example.readstack.screens.AnalyticsScreen
 import com.example.readstack.screens.MyBooksScreen
 import com.example.readstack.screens.SearchScreen
@@ -60,10 +61,11 @@ import com.example.readstack.screens.SearchScreen
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val database = ReadStackDatabase.getDatabase(this)
         enableEdgeToEdge()
         setContent {
             ReadStackTheme {
-                AppNavigation()
+                AppNavigation(database = database)
             }
         }
     }

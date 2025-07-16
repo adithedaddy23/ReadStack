@@ -1,8 +1,15 @@
 package com.example.readstack.screens
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -27,6 +34,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -35,6 +43,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,9 +58,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -63,337 +80,398 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.readstack.R
 import com.example.readstack.api.NetworkResponseClass
+import com.example.readstack.viewmodel.BookStorageResult
+import com.example.readstack.viewmodel.BookStorageViewModel
 import com.example.readstack.viewmodel.BookViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import kotlinx.coroutines.flow.collectLatest
 
 @OptIn(ExperimentalLayoutApi::class)
 @SuppressLint("UnrememberedMutableState")
 @Composable
-fun BookDetailScreen(workKey: String, viewModel: BookViewModel, navController: NavController) {
-    val detailResult = viewModel.bookDetailsResult.collectAsState()
+fun BookDetailScreen(
+    workKey: String,
+    bookViewModel: BookViewModel,
+    bookStorageViewModel: BookStorageViewModel,
+    navController: NavController
+) {
+    val detailResult = bookViewModel.bookDetailsResult.collectAsState()
+    val storageResult = bookStorageViewModel.storageResult.collectAsState()
     val hazeState = remember { HazeState() }
     val scrollState = rememberScrollState()
-    val scrollOffset by derivedStateOf { scrollState.value > 0 }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    // Animate elevation and background for frosted glass effect
-    val cardElevation by animateDpAsState(
-        targetValue = if (scrollOffset) 8.dp else 0.dp,
-        label = "cardElevation"
-    )
-    val backgroundAlpha by animateColorAsState(
-        targetValue = if (scrollOffset) MaterialTheme.colorScheme.surface.copy(alpha = 0.6f)
-        else MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-        label = "backgroundAlpha"
-    )
-
-    LaunchedEffect(workKey) {
-        viewModel.getBookDetails(workKey)
+    // Handle storage result for showing feedback
+    LaunchedEffect(storageResult.value) {
+        storageResult.value.message?.let { message ->
+            snackbarHostState.showSnackbar(
+                message = message,
+                duration = SnackbarDuration.Short
+            )
+        }
     }
 
-    when (val result = detailResult.value) {
-        is NetworkResponseClass.loading -> {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(
-                    color = MaterialTheme.colorScheme.primary,
-                    strokeWidth = 4.dp,
-                    modifier = Modifier.size(48.dp)
-                )
-            }
-        }
+    LaunchedEffect(workKey) {
+        bookViewModel.getBookDetails(workKey)
+    }
 
-        is NetworkResponseClass.Error -> {
-            ErrorScreen(message = result.message, onRetry = { viewModel.getBookDetails(workKey) })
-        }
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .background(MaterialTheme.colorScheme.background)
+        ) {
+            when (val result = detailResult.value) {
+                is NetworkResponseClass.loading -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            strokeWidth = 4.dp,
+                            modifier = Modifier.size(48.dp)
+                        )
+                    }
+                }
 
-        is NetworkResponseClass.Success -> {
-            val data = result.data
-            val coverImageUrl = data.covers?.firstOrNull()?.let {
-                "https://covers.openlibrary.org/b/id/$it-L.jpg"
-            }
+                is NetworkResponseClass.Error -> {
+                    ErrorScreen(message = result.message, onRetry = { bookViewModel.getBookDetails(workKey) })
+                }
 
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background)
-            ) {
-                // Fixed background image
-                if (coverImageUrl != null) {
-                    val painter = rememberAsyncImagePainter(
-                        model = ImageRequest.Builder(LocalContext.current)
-                            .data(coverImageUrl)
-                            .crossfade(true)
-                            .error(R.drawable.image)
-                            .build()
-                    )
+                is NetworkResponseClass.Success -> {
+                    val data = result.data
+                    val coverImageUrl = data.covers?.firstOrNull()?.let {
+                        "https://covers.openlibrary.org/b/id/$it-L.jpg"
+                    }
 
-                    Image(
-                        painter = painter,
-                        contentDescription = data.title ?: "Book cover",
-                        contentScale = ContentScale.Crop,
+                    // Background image with haze effect
+                    if (coverImageUrl != null) {
+                        val painter = rememberAsyncImagePainter(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(coverImageUrl)
+                                .crossfade(true)
+                                .error(R.drawable.image)
+                                .build()
+                        )
+
+                        Image(
+                            painter = painter,
+                            contentDescription = data.title ?: "Book cover",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(400.dp)
+                                .haze(
+                                    state = hazeState,
+                                    backgroundColor = MaterialTheme.colorScheme.background,
+                                    tint = Color.Black.copy(alpha = 0.3f),
+                                    blurRadius = 25.dp
+                                )
+                        )
+
+                        if (painter.state is AsyncImagePainter.State.Loading) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(400.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    strokeWidth = 3.dp
+                                )
+                            }
+                        } else if (painter.state is AsyncImagePainter.State.Error) {
+                            ModernPlaceholderContent()
+                        }
+                    } else {
+                        ModernPlaceholderContent()
+                    }
+
+                    // Scrollable content
+                    Column(
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .height(360.dp)
-                            .haze(
-                                state = hazeState,
-                                backgroundColor = MaterialTheme.colorScheme.background,
-                                tint = Color.White.copy(alpha = 0.1f),
-                                blurRadius = 10.dp
-                            )
-                            .zIndex(-1f)
-                    )
-
-                    // Loading state
-                    if (painter.state is AsyncImagePainter.State.Loading) {
+                            .fillMaxSize()
+                            .verticalScroll(scrollState)
+                            .padding(top = 350.dp)
+                    ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(360.dp)
+                                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                                 .background(
-                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)
-                                ),
-                            contentAlignment = Alignment.Center
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)
+                                )
+                                .hazeChild(
+                                    state = hazeState,
+                                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                                )
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                                )
                         ) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(32.dp),
-                                color = MaterialTheme.colorScheme.primary,
-                                strokeWidth = 3.dp
-                            )
-                        }
-                    }
-                    // Error state
-                    else if (painter.state is AsyncImagePainter.State.Error) {
-                        ModernPlaceholderContent()
-                    }
-                } else {
-                    ModernPlaceholderContent()
-                }
-
-                // Back button
-                IconButton(
-                    onClick = { navController.popBackStack() },
-                    modifier = Modifier
-
-                        .padding(16.dp)
-                        .align(Alignment.TopStart)
-                        .background(
-                            MaterialTheme.colorScheme.surface.copy(alpha = 0.5f),
-                            CircleShape
-                        )
-                        .size(48.dp)
-                        .zIndex(1f)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.ArrowBack,
-                        contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface,
-
-                    )
-                }
-
-                // Scrollable content with frosted glass effect
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .verticalScroll(scrollState)
-                        .padding(top = 320.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-                            .background(backgroundAlpha)
-                            .hazeChild(
-                                state = hazeState,
-                                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
-                            )
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
-                                RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
-                            )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .padding(24.dp)
-                                .fillMaxWidth()
-                        ) {
-                            // Title
-                            Text(
-                                text = data.title ?: "Untitled",
-                                style = MaterialTheme.typography.headlineLarge.copy(
-                                    fontWeight = FontWeight.ExtraBold,
-                                    fontSize = 28.sp,
-                                    lineHeight = 34.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurface,
-                                modifier = Modifier.padding(bottom = 12.dp)
-                            )
-
-                            // Metadata
-                            Row(
-                                modifier = Modifier.padding(bottom = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            Column(
+                                modifier = Modifier
+                                    .padding(32.dp)
+                                    .fillMaxWidth()
                             ) {
-                                data.first_publish_date?.let {
-                                    Surface(
-                                        color = MaterialTheme.colorScheme.surfaceVariant,
-                                        shape = RoundedCornerShape(8.dp)
-                                    ) {
-                                        Text(
-                                            text = it,
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                        )
-                                    }
-                                }
-
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                    shape = RoundedCornerShape(8.dp)
-                                ) {
-                                    Text(
-                                        text = "★ 4.5",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                    )
-                                }
-                            }
-
-                            // Description
-                            data.getDescriptionText()?.let { description ->
+                                // Title
                                 Text(
-                                    text = "About the Book",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 20.sp
+                                    text = data.title ?: "Untitled",
+                                    style = MaterialTheme.typography.headlineLarge.copy(
+                                        fontWeight = FontWeight.ExtraBold,
+                                        fontSize = 32.sp,
+                                        lineHeight = 38.sp,
+                                        letterSpacing = (-0.5).sp
                                     ),
                                     color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 12.dp)
+                                    modifier = Modifier.padding(bottom = 16.dp)
                                 )
-                                Text(
-                                    text = description,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        lineHeight = 26.sp,
-                                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
-                                    ),
-                                    modifier = Modifier.padding(bottom = 24.dp)
-                                )
-                            }
 
-                            // Subjects
-                            data.subjects?.takeIf { it.isNotEmpty() }?.let { subjects ->
-                                Text(
-                                    text = "Subjects",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 20.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 12.dp)
-                                )
-                                FlowRow(
+                                // Metadata
+                                Row(
                                     modifier = Modifier.padding(bottom = 24.dp),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(16.dp)
                                 ) {
-                                    subjects.take(10).forEach { subject ->
+                                    data.first_publish_date?.let {
                                         Surface(
-                                            color = MaterialTheme.colorScheme.secondaryContainer,
+                                            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f),
                                             shape = RoundedCornerShape(12.dp),
-                                            tonalElevation = 2.dp
+                                            tonalElevation = 4.dp
                                         ) {
                                             Text(
-                                                text = subject,
-                                                style = MaterialTheme.typography.labelLarge,
-                                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                text = it,
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                                                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
                                             )
                                         }
                                     }
-                                }
-                            }
 
-                            // Excerpt
-                            data.excerpts?.firstOrNull()?.text?.let { excerpt ->
-                                Text(
-                                    text = "Excerpt",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.SemiBold,
-                                        fontSize = 20.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 12.dp)
-                                )
-                                Surface(
-                                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f),
-                                    shape = RoundedCornerShape(16.dp),
-                                    tonalElevation = 4.dp,
-                                    modifier = Modifier.padding(bottom = 24.dp)
+                                }
+
+                                // Action buttons
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 32.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
+                                    Surface(
+                                        onClick = { bookStorageViewModel.saveBookFromApi(workKey, "finished") },
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f),
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxSize(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.check),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = MaterialTheme.colorScheme.primary
+                                            )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(
+                                                text = "Finished",
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = MaterialTheme.colorScheme.primary
+                                            )
+                                        }
+                                    }
+
+                                    Surface(
+                                        onClick = { bookStorageViewModel.saveBookFromApi(workKey, "want_to_read") },
+                                        shape = RoundedCornerShape(16.dp),
+                                        color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.15f),
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .height(48.dp)
+                                            .border(
+                                                width = 1.dp,
+                                                color = MaterialTheme.colorScheme.secondary.copy(alpha = 0.3f),
+                                                shape = RoundedCornerShape(16.dp)
+                                            )
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.fillMaxSize(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.Center
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.bookmark),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(20.dp),
+                                                tint = MaterialTheme.colorScheme.secondary
+                                            )
+                                            Spacer(Modifier.width(8.dp))
+                                            Text(
+                                                text = "Want to Read",
+                                                style = MaterialTheme.typography.labelLarge.copy(
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = MaterialTheme.colorScheme.secondary
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Description
+                                data.getDescriptionText()?.let { description ->
                                     Text(
-                                        text = excerpt,
-                                        style = MaterialTheme.typography.bodyLarge.copy(
-                                            fontStyle = FontStyle.Italic,
-                                            lineHeight = 26.sp,
-                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.85f)
+                                        text = "About the Book",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 24.sp,
+                                            letterSpacing = (-0.3).sp
                                         ),
-                                        modifier = Modifier.padding(20.dp)
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+                                    Text(
+                                        text = description,
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            lineHeight = 28.sp,
+                                            letterSpacing = 0.1.sp,
+                                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f)
+                                        ),
+                                        modifier = Modifier.padding(bottom = 32.dp)
                                     )
                                 }
-                            }
 
-                            // Action Buttons
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(16.dp)
-                            ) {
+                                // Subjects
+                                data.subjects?.takeIf { it.isNotEmpty() }?.let { subjects ->
+                                    Text(
+                                        text = "Subjects",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 24.sp,
+                                            letterSpacing = (-0.3).sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+                                    FlowRow(
+                                        modifier = Modifier.padding(bottom = 32.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                                    ) {
+                                        subjects.take(10).forEach { subject ->
+                                            Surface(
+                                                color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.8f),
+                                                shape = RoundedCornerShape(16.dp),
+                                                tonalElevation = 6.dp
+                                            ) {
+                                                Text(
+                                                    text = subject,
+                                                    style = MaterialTheme.typography.labelLarge.copy(
+                                                        fontWeight = FontWeight.Medium
+                                                    ),
+                                                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // "Currently Reading" button
                                 Button(
-                                    onClick = { /* Add to library */ },
+                                    onClick = { bookStorageViewModel.saveBookFromApi(workKey, "currently_reading") },
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(12.dp),
+                                        .fillMaxWidth()
+                                        .height(56.dp),
+                                    shape = RoundedCornerShape(16.dp),
                                     colors = ButtonDefaults.buttonColors(
-                                        containerColor = MaterialTheme.colorScheme.primary,
-                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                        containerColor = MaterialTheme.colorScheme.tertiary,
+                                        contentColor = MaterialTheme.colorScheme.onTertiary
                                     ),
                                     elevation = ButtonDefaults.buttonElevation(
-                                        defaultElevation = 2.dp,
-                                        pressedElevation = 6.dp
+                                        defaultElevation = 4.dp,
+                                        pressedElevation = 8.dp
                                     )
                                 ) {
-                                    Text(
-                                        text = "Add to Library",
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                }
-
-                                OutlinedButton(
-                                    onClick = { /* Share */ },
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .height(48.dp),
-                                    shape = RoundedCornerShape(12.dp),
-                                    border = BorderStroke(
-                                        1.5.dp,
-                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-                                    )
-                                ) {
-                                    Text(
-                                        text = "Share",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(R.drawable.open_book),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Text(
+                                            text = "Currently Reading",
+                                            style = MaterialTheme.typography.titleMedium.copy(
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                        )
+                                    }
                                 }
                             }
                         }
+                        Spacer(Modifier.height(40.dp))
                     }
-                    Spacer(Modifier.height(32.dp)) // Bottom padding
+
+                    // Floating Back Button with Frosted Glass Effect
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .haze(
+                                state = HazeState(),
+                                backgroundColor = Color.Black.copy(0.3f)
+                            )
+                            .padding(start = 16.dp, top = 16.dp),
+                        contentAlignment = Alignment.TopStart
+                    ) {
+                        IconButton(
+                            onClick = { navController.popBackStack() },
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                                    CircleShape
+                                )
+                                .hazeChild(
+                                    state = HazeState()
+                                )
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                                    shape = CircleShape
+                                )
+                                .size(48.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -463,7 +541,7 @@ private fun ModernPlaceholderContent() {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(360.dp)
+            .height(400.dp)
             .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
         contentAlignment = Alignment.Center
     ) {

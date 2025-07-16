@@ -28,25 +28,29 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.example.readstack.navigation.BottomNavIcon
 import com.example.readstack.navigation.getBottomNavItems
+import com.example.readstack.roomdatabase.ReadStackDatabase
 import com.example.readstack.screens.AnalyticsScreen
 import com.example.readstack.screens.BookDetailScreen
 import com.example.readstack.screens.MyBooksScreen
 import com.example.readstack.screens.SearchScreen
+import com.example.readstack.viewmodel.BookStorageViewModel
+import com.example.readstack.viewmodel.BookStorageViewModelFactory
 import com.example.readstack.viewmodel.BookViewModel
 
 @Composable
 fun AppNavigation(
+    database: ReadStackDatabase
 ) {
     val navController = rememberNavController()
     val bookViewModel: BookViewModel = viewModel()
-    Scaffold (
+    Scaffold(
         bottomBar = { BottomNavigationBar(navController = navController) }
     ) { paddingValues ->
         NavHost(
-            navController =navController,
+            navController = navController,
             startDestination = "my_books",
             modifier = Modifier.padding(paddingValues)
-        )  {
+        ) {
             composable("my_books") {
                 MyBooksScreen(navController = navController)
             }
@@ -59,12 +63,21 @@ fun AppNavigation(
                     bookViewModel = bookViewModel
                 )
             }
-            composable("book_detail/{workKey}") { backStackEntry ->
-                val workKey = backStackEntry.arguments?.getString("workKey") ?: return@composable
-                BookDetailScreen(workKey = workKey, viewModel = bookViewModel, navController = navController)
+            composable("bookDetail/{workKey}") { backStackEntry ->
+                val workKey = backStackEntry.arguments?.getString("workKey") ?: ""
+                val bookViewModel: BookViewModel = viewModel()
+                val bookStorageViewModel: BookStorageViewModel = viewModel(
+                    factory = BookStorageViewModelFactory(
+                        bookDao = database.bookDao()
+                    )
+                )
+                BookDetailScreen(
+                    workKey = workKey,
+                    bookViewModel = bookViewModel,
+                    bookStorageViewModel = bookStorageViewModel,
+                    navController = navController
+                )
             }
-
-
         }
     }
 }

@@ -7,10 +7,8 @@ import androidx.room.PrimaryKey
 data class Book(
     @PrimaryKey val id: String,
     val title: String,
-    val author: String,
     val coverUrl: String?,
     val shelf: String,
-    val totalPages: Int,
     val currentPage: Int = 0,
     val updatedAt: Long = System.currentTimeMillis()
 )
