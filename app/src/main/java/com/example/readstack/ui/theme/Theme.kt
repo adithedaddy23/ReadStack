@@ -48,35 +48,40 @@ val LightColorScheme = lightColorScheme(
 )
 
 val DarkColorScheme = darkColorScheme(
-    primary = Color(0xFFA3D5D8), // Lighter, more vibrant teal
-    onPrimary = Color(0xFF002F33), // Darker for contrast
-    primaryContainer = Color(0xFF2A474B), // Richer container
-    onPrimaryContainer = Color(0xFFC2E0E3), // Matches light theme container
+    // Primary (Yellow for actions)
+    primary = Color(0xFFFFC107), // A vibrant, warm yellow
+    onPrimary = Color(0xFF000000), // Black for high contrast on yellow
+    primaryContainer = Color(0xFF4D3800), // A dark, muted yellow for containers
+    onPrimaryContainer = Color(0xFFFFDFA6), // Light yellow for text/icons on the container
 
-    secondary = Color(0xFFB8CED1), // Lighter, cooler secondary
-    onSecondary = Color(0xFF1B2E31), // Darker for contrast
-    secondaryContainer = Color(0xFF324447), // Distinct container
-    onSecondaryContainer = Color(0xFFD1E3E6),
+    // Secondary (Blue for information)
+    secondary = Color(0xFF2196F3), // A clear, standard blue
+    onSecondary = Color(0xFFFFFFFF), // White for high contrast on blue
+    secondaryContainer = Color(0xFF003062), // A deep blue for containers
+    onSecondaryContainer = Color(0xFFD0E4FF), // Light blue for text/icons on the container
 
-    tertiary = Color(0xFFE5A590), // Warmer, brighter accent
-    onTertiary = Color(0xFF4F1708), // Darker for readability
-    tertiaryContainer = Color(0xFF6E2C1A), // Richer container
-    onTertiaryContainer = Color(0xFFFFD2C6),
+    // Tertiary (Green for success)
+    tertiary = Color(0xFF4CAF50), // A positive, clear green
+    onTertiary = Color(0xFFFFFFFF), // White for high contrast on green
+    tertiaryContainer = Color(0xFF003813), // A deep green for containers
+    onTertiaryContainer = Color(0xFFC8F5C8), // Light green for text/icons on the container
 
-    error = Color(0xFFF28B82), // Softer, distinct error
-    onError = Color(0xFF5C0010),
-    errorContainer = Color(0xFF8B0022),
-    onErrorContainer = Color(0xFFFFCDD2),
+    // Error (Red for errors)
+    error = Color(0xFFF44336), // A strong, standard red
+    onError = Color(0xFFFFFFFF), // White for high contrast on red
+    errorContainer = Color(0xFF630005), // A deep red for containers
+    onErrorContainer = Color(0xFFFFDAD6), // Light red for text/icons on the container
 
-    background = Color(0xFF141717), // Slightly warmer dark
-    onBackground = Color(0xFFDEE0E0), // High contrast
+    // Background & Surfaces (Black/Dark Grey)
+    background = Color(0xFF121212), // A deep, neutral dark grey (near black)
+    onBackground = Color(0xFFE6E6E6), // Soft off-white for text and icons
+    surface = Color(0xFF121212), // Surface color matches the background
+    onSurface = Color(0xFFE6E6E6), // Text on surface color
 
-    surface = Color(0xFF141717), // Matches background
-    onSurface = Color(0xFFDEE0E0),
-    surfaceVariant = Color(0xFF3A4647), // Matches light theme variant
-    onSurfaceVariant = Color(0xFFB8C4C6), // High contrast
-
-    outline = Color(0xFF849091) // Brighter, distinct outline
+    // Surface Variants & Outlines
+    surfaceVariant = Color(0xFF424242), // A neutral grey for cards and elevated surfaces
+    onSurfaceVariant = Color(0xFFBDBDBD), // Lighter grey for text on variant surfaces
+    outline = Color(0xFF757575) // A subtle grey for borders and dividers
 )
 
 

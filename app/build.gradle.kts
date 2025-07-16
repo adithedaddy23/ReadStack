@@ -61,7 +61,12 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
     implementation("androidx.navigation:navigation-compose:2.7.7")
-//    implementation(libs.androidx.appcompat) // Updated version
+// Kotlin Coroutines
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
+    implementation ("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+
+    // Lifecycle for viewModelScope and stateIn
+    implementation ("androidx.lifecycle:lifecycle-viewmodel-ktx:2.7.0")
 
     val room_version = "2.7.2"
 

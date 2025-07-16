@@ -2,9 +2,12 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -13,6 +16,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
@@ -36,6 +41,8 @@ import com.example.readstack.screens.SearchScreen
 import com.example.readstack.viewmodel.BookStorageViewModel
 import com.example.readstack.viewmodel.BookStorageViewModelFactory
 import com.example.readstack.viewmodel.BookViewModel
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeChild
 
 @Composable
 fun AppNavigation(
@@ -43,24 +50,38 @@ fun AppNavigation(
 ) {
     val navController = rememberNavController()
     val bookViewModel: BookViewModel = viewModel()
-    Scaffold(
-        bottomBar = { BottomNavigationBar(navController = navController) }
-    ) { paddingValues ->
+    val hazeState = remember { HazeState() }
+
+    // Remove Scaffold and its padding to allow content to go behind bottom bar
+    Box(modifier = Modifier.fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = "my_books",
-            modifier = Modifier.padding(paddingValues)
+            modifier = Modifier.fillMaxSize()
         ) {
             composable("my_books") {
-                MyBooksScreen(navController = navController)
+                val bookStorageViewModel: BookStorageViewModel = viewModel(
+                    factory = BookStorageViewModelFactory(
+                        bookDao = database.bookDao()
+                    )
+                )
+                MyBooksScreen(
+                    navController = navController,
+                    bookStorageViewModel = bookStorageViewModel,
+                    hazeState = hazeState
+                )
             }
             composable("insights") {
-                AnalyticsScreen(navController = navController)
+                AnalyticsScreen(
+                    navController = navController,
+                    hazeState = hazeState
+                )
             }
             composable("search") {
                 SearchScreen(
                     navController = navController,
-                    bookViewModel = bookViewModel
+                    bookViewModel = bookViewModel,
+                    hazeState = hazeState
                 )
             }
             composable("bookDetail/{workKey}") { backStackEntry ->
@@ -75,26 +96,47 @@ fun AppNavigation(
                     workKey = workKey,
                     bookViewModel = bookViewModel,
                     bookStorageViewModel = bookStorageViewModel,
-                    navController = navController
+                    navController = navController,
+                    hazeState = hazeState
                 )
             }
         }
+
+        // Bottom navigation bar with frosted glass effect
+        BottomNavigationBar(
+            navController = navController,
+            hazeState = hazeState,
+            modifier = Modifier.align(Alignment.BottomCenter)
+        )
     }
 }
 
 @Composable
 fun BottomNavigationBar(
     navController: NavController,
-    containerColor: Color = MaterialTheme.colorScheme.surface,
+    hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
     val haptic = LocalHapticFeedback.current
-    val bottomNavItems = getBottomNavItems() //
+    val bottomNavItems = getBottomNavItems()
 
+    // This condition ensures the bottom bar only shows on specific screens
     if (currentRoute in listOf("my_books", "insights", "search")) {
-        NavigationBar(modifier = modifier) {
+        NavigationBar(
+            modifier = modifier
+                .hazeChild(
+                    state = hazeState,
+                )
+                .border(
+                    width = 0.5.dp,
+                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                    shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
+                ),
+            containerColor = Color.Transparent, // Make container transparent to show haze effect
+            tonalElevation = 0.dp
+        ) {
             bottomNavItems.forEach { navItem ->
                 val selected = currentRoute == navItem.route
 
@@ -120,10 +162,10 @@ fun BottomNavigationBar(
                     selected = selected,
                     colors = NavigationBarItemDefaults.colors(
                         selectedIconColor = MaterialTheme.colorScheme.primary,
-                        unselectedIconColor = MaterialTheme.colorScheme.secondary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
                         selectedTextColor = MaterialTheme.colorScheme.primary,
-                        unselectedTextColor = MaterialTheme.colorScheme.secondary,
-                        indicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                        unselectedTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
+                        indicatorColor = Color.Transparent
                     ),
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)

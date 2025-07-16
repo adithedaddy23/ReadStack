@@ -95,7 +95,8 @@ fun BookDetailScreen(
     workKey: String,
     bookViewModel: BookViewModel,
     bookStorageViewModel: BookStorageViewModel,
-    navController: NavController
+    navController: NavController,
+    hazeState: HazeState
 ) {
     val detailResult = bookViewModel.bookDetailsResult.collectAsState()
     val storageResult = bookStorageViewModel.storageResult.collectAsState()

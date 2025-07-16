@@ -82,31 +82,43 @@ import dev.chrisbanes.haze.hazeChild
 @Composable
 fun SearchScreen(
     navController: NavHostController,
-    bookViewModel: BookViewModel
+    bookViewModel: BookViewModel,
+    hazeState: HazeState
 ) {
 
     var book by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val bookResult = bookViewModel.bookResult.collectAsState()
-    Box(
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
-    )  {
-        Column {
+            .haze(
+                state = hazeState,
+                backgroundColor = MaterialTheme.colorScheme.background
+            )
+            .padding(horizontal = 16.dp)
+    ) {
+        // Fixed header section
+        Column(
+            modifier = Modifier.padding(top = 16.dp)
+        ) {
             Text(
                 text = "Search Books",
                 color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineMedium
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 32.sp
+                )
             )
 
             Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
-                modifier =Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 value = book,
-                onValueChange ={ newValue ->
+                onValueChange = { newValue ->
                     book = newValue
                 },
                 label = {
@@ -121,7 +133,7 @@ fun SearchScreen(
                             .padding(4.dp)
                             .size(32.dp),
                         imageVector = Icons.Default.Search,
-                        contentDescription = "Your Location"
+                        contentDescription = "Search"
                     )
                 },
                 keyboardActions = KeyboardActions(
@@ -129,79 +141,73 @@ fun SearchScreen(
                         if (book.isNotEmpty()) {
                             bookViewModel.getData(book)
                             keyboardController?.hide()
-
                         }
                     }
                 ),
             )
 
-            when (val result = bookResult.value) {
-                is NetworkResponseClass.loading -> {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 48.dp)
-                    ) {
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text("Searching books...")
-                    }
-                }
-
-                is NetworkResponseClass.Error -> {
-                    if(result.message.isNotEmpty()) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 24.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.errorContainer
-                            )
-                        ) {
-                            Text(
-                                text = result.message,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
-                    }
-
-                }
-
-                is NetworkResponseClass.Success -> {
-                    BookDetails(data = result.data, navController = navController)
-                }
-            }
+            Spacer(Modifier.height(16.dp))
         }
 
+        // Scrollable content section
+        when (val result = bookResult.value) {
+            is NetworkResponseClass.loading -> {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 48.dp)
+                ) {
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("Searching books...")
+                }
+            }
+
+            is NetworkResponseClass.Error -> {
+                if(result.message.isNotEmpty()) {
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer
+                        )
+                    ) {
+                        Text(
+                            text = result.message,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
+                            modifier = Modifier.padding(16.dp)
+                        )
+                    }
+                }
+            }
+
+            is NetworkResponseClass.Success -> {
+                BookDetails(data = result.data, navController = navController)
+            }
+        }
     }
 }
 
 @Composable
-fun BookDetails(data: ApiResponse,navController: NavController) {
-    Spacer(Modifier.height(16.dp))
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-    ) {
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(data.docs) { book ->
-                ModernBookItem(book = book, navController = navController)
-            }
-        }
+fun BookDetails(data: ApiResponse, navController: NavController) {
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        contentPadding = PaddingValues(
+            horizontal = 4.dp,
+            vertical = 8.dp,
 
+        ),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier.fillMaxSize()
+    ) {
+        items(data.docs) { book ->
+            ModernBookItem(book = book, navController = navController)
+        }
     }
 }
-
-
 
 @Composable
 fun ModernBookItem(
