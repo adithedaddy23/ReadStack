@@ -8,7 +8,7 @@ interface BookApi {
     @GET("search.json")
     suspend fun searchBooks(
         @Query("q") query: String,
-        @Query("limit") limit: Int = 20
+        @Query("limit") limit: Int = 30
     ): ApiResponse
 
     // Remove encoded = true to let Retrofit handle URL encoding

@@ -22,7 +22,7 @@ class BookViewModel: ViewModel() {
         _bookResult.value = NetworkResponseClass.loading
         viewModelScope.launch {
             try {
-                val response = bookApi.searchBooks(name,20);
+                val response = bookApi.searchBooks(name,30);
                 _bookResult.value = NetworkResponseClass.Success(response)
             } catch (e: Exception) {
                 _bookResult.value = NetworkResponseClass.Error(e.message.toString())

@@ -184,7 +184,20 @@ fun SearchScreen(
             }
 
             is NetworkResponseClass.Success -> {
-                BookDetails(data = result.data, navController = navController)
+                // --- FIX STARTS HERE ---
+
+                // 1. Filter the list to include only books with a cover ID.
+                val booksWithCovers = result.data.docs.filter { doc ->
+                    doc.cover_i != null
+                }
+
+                // 2. Create a new ApiResponse with the filtered list.
+                val filteredData = result.data.copy(docs = booksWithCovers)
+
+                // 3. Pass the filtered data to your grid.
+                BookDetails(data = filteredData, navController = navController)
+
+                // --- FIX ENDS HERE ---
             }
         }
     }

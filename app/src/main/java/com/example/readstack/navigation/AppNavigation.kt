@@ -42,6 +42,7 @@ import com.example.readstack.viewmodel.BookStorageViewModel
 import com.example.readstack.viewmodel.BookStorageViewModelFactory
 import com.example.readstack.viewmodel.BookViewModel
 import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 
 @Composable
@@ -53,7 +54,8 @@ fun AppNavigation(
     val hazeState = remember { HazeState() }
 
     // Remove Scaffold and its padding to allow content to go behind bottom bar
-    Box(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier
+        .fillMaxSize()) {
         NavHost(
             navController = navController,
             startDestination = "my_books",

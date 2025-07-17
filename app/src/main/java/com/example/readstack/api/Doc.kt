@@ -4,7 +4,7 @@ data class Doc(
     val author_key: List<String>,
     val author_name: List<String>,
     val cover_edition_key: String,
-    val cover_i: Int,
+    val cover_i: Int?,
     val ebook_access: String,
     val edition_count: Int,
     val first_publish_year: Int,
@@ -19,3 +19,4 @@ data class Doc(
     val subtitle: String,
     val title: String
 )
+
