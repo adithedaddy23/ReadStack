@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -38,7 +39,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -74,6 +77,7 @@ import com.example.readstack.R
 import com.example.readstack.api.ApiResponse
 import com.example.readstack.api.Doc
 import com.example.readstack.api.NetworkResponseClass
+import com.example.readstack.api.Work
 import com.example.readstack.viewmodel.BookViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
@@ -85,10 +89,18 @@ fun SearchScreen(
     bookViewModel: BookViewModel,
     hazeState: HazeState
 ) {
-
     var book by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
     val bookResult = bookViewModel.bookResult.collectAsState()
+    val genreBooks = bookViewModel.genreBooks.collectAsState()
+    val genreBooksLoading = bookViewModel.genreBooksLoading.collectAsState()
+
+    // Only load genres if they're empty
+    LaunchedEffect(genreBooks.value) {
+        if (genreBooks.value.isEmpty()) {
+            bookViewModel.fetchGenreBooks()
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -98,22 +110,18 @@ fun SearchScreen(
                 state = hazeState,
                 backgroundColor = MaterialTheme.colorScheme.background
             )
-            .padding(horizontal = 16.dp)
     ) {
         // Fixed header section
         Column(
-            modifier = Modifier.padding(top = 16.dp)
+            modifier = Modifier
+                .padding(horizontal = 16.dp)
         ) {
             Text(
-                text = "Search Books",
+                text = "Explore",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 32.sp
-                )
+                modifier = Modifier.padding(vertical = 16.dp)
             )
-
-            Spacer(Modifier.height(16.dp))
 
             OutlinedTextField(
                 modifier = Modifier.fillMaxWidth(),
@@ -149,9 +157,11 @@ fun SearchScreen(
             Spacer(Modifier.height(16.dp))
         }
 
-        // Scrollable content section
-        when (val result = bookResult.value) {
-            is NetworkResponseClass.loading -> {
+        // Content section - either genres or search results
+        if (book.isBlank()) {
+            // Show genre sections when no search query
+            if (genreBooksLoading.value) {
+                // Show loading state while genres are being fetched
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
@@ -160,44 +170,67 @@ fun SearchScreen(
                 ) {
                     CircularProgressIndicator()
                     Spacer(modifier = Modifier.height(12.dp))
-                    Text("Searching books...")
+                    Text(
+                        text = "Loading genres",
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
                 }
-            }
-
-            is NetworkResponseClass.Error -> {
-                if(result.message.isNotEmpty()) {
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 24.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.errorContainer
-                        )
-                    ) {
-                        Text(
-                            text = result.message,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.padding(16.dp)
-                        )
+            } else {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(bottom = 80.dp)
+                ) {
+                    item {
+                        GenreSections(genreBooks.value, navController)
                     }
                 }
             }
-
-            is NetworkResponseClass.Success -> {
-                // --- FIX STARTS HERE ---
-
-                // 1. Filter the list to include only books with a cover ID.
-                val booksWithCovers = result.data.docs.filter { doc ->
-                    doc.cover_i != null
+        } else {
+            // Show search results when there's a search query
+            when (val result = bookResult.value) {
+                is NetworkResponseClass.loading -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 48.dp)
+                    ) {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text("Searching books...")
+                    }
                 }
 
-                // 2. Create a new ApiResponse with the filtered list.
-                val filteredData = result.data.copy(docs = booksWithCovers)
+                is NetworkResponseClass.Error -> {
+                    if (result.message.isNotEmpty()) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 24.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer
+                            )
+                        ) {
+                            Text(
+                                text = result.message,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(16.dp)
+                            )
+                        }
+                    }
+                }
 
-                // 3. Pass the filtered data to your grid.
-                BookDetails(data = filteredData, navController = navController)
+                is NetworkResponseClass.Success -> {
+                    // Filter books with covers and show results
+                    val booksWithCovers = result.data.docs.filter { doc ->
+                        doc.cover_i != null
+                    }
+                    val filteredData = result.data.copy(docs = booksWithCovers)
 
-                // --- FIX ENDS HERE ---
+                    BookDetails(data = filteredData, navController = navController)
+                }
             }
         }
     }
@@ -208,16 +241,14 @@ fun BookDetails(data: ApiResponse, navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(
-            start = 4.dp,
-            end = 4.dp,
+            start = 16.dp,
+            end = 16.dp,
             top = 8.dp,
             bottom = 80.dp + 24.dp
-
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier
-            .fillMaxSize()
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.fillMaxSize()
     ) {
         items(data.docs) { book ->
             ModernBookItem(book = book, navController = navController)
@@ -329,6 +360,105 @@ fun ModernBookItem(
         }
     }
 }
+
+@Composable
+fun GenreSections(genres: Map<String, List<Work>>, navController: NavController) {
+    Column {
+        genres.forEach { (genre, books) ->
+            if (books.isNotEmpty()) {
+                Text(
+                    text = genre.replaceFirstChar { it.uppercase() },
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(end = 16.dp, bottom = 12.dp),
+                    modifier = Modifier.padding(bottom = 12.dp)
+                ) {
+                    items(books) { work ->
+                        GenreBookItem(work = work, navController = navController)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun GenreBookItem(work: Work, navController: NavController) {
+    val imageUrl = work.cover_id?.let {
+        "https://covers.openlibrary.org/b/id/${it}-M.jpg"
+    }
+
+    Card(
+        modifier = Modifier
+            .width(140.dp)
+            .height(210.dp)
+            .clickable {
+                val cleanKey = work.key.replace("/works/", "")
+                navController.navigate("bookDetail/$cleanKey")
+            },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(4.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            val painter = rememberAsyncImagePainter(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .error(R.drawable.image)
+                    .build()
+            )
+
+            Image(
+                painter = painter,
+                contentDescription = work.title,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+            )
+
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 100f
+                        )
+                    )
+            )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = work.title,
+                    color = Color.White,
+                    fontSize = 13.sp,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                work.authors?.firstOrNull()?.name?.let {
+                    Text(
+                        text = it,
+                        color = Color.White.copy(alpha = 0.85f),
+                        fontSize = 11.sp
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 
 @Composable

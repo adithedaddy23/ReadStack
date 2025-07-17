@@ -40,9 +40,9 @@ fun getBottomNavItems(): List<BottomNavItem> {
             route = "insights"
         ),
         BottomNavItem(
-            label = "Search",
+            label = "Explore",
             icon = IconType.Vector(Icons.Default.Search),
-            route = "search"
+            route = "explore"
         )
     )
 }

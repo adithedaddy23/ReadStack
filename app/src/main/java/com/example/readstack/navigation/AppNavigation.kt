@@ -79,7 +79,7 @@ fun AppNavigation(
                     hazeState = hazeState
                 )
             }
-            composable("search") {
+            composable("explore") {
                 SearchScreen(
                     navController = navController,
                     bookViewModel = bookViewModel,
@@ -125,7 +125,7 @@ fun BottomNavigationBar(
     val bottomNavItems = getBottomNavItems()
 
     // This condition ensures the bottom bar only shows on specific screens
-    if (currentRoute in listOf("my_books", "insights", "search")) {
+    if (currentRoute in listOf("my_books", "insights", "explore")) {
         NavigationBar(
             modifier = modifier
                 .hazeChild(
