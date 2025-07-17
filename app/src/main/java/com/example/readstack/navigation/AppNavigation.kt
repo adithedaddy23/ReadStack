@@ -134,7 +134,7 @@ fun BottomNavigationBar(
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                     shape = RoundedCornerShape(topStart = 0.dp, topEnd = 0.dp)
                 ),
-            containerColor = Color.Transparent, // Make container transparent to show haze effect
+            containerColor = Color.Transparent,
             tonalElevation = 0.dp
         ) {
             bottomNavItems.forEach { navItem ->

@@ -14,38 +14,47 @@ import androidx.compose.ui.platform.LocalContext
 
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
+import com.example.ui.theme.AppTypography
 
 val LightColorScheme = lightColorScheme(
-    primary = Color(0xFF3B5F64), // Slightly darker, richer teal for better contrast
-    onPrimary = Color(0xFFFFFFFF), // White for max contrast
-    primaryContainer = Color(0xFFC2E0E3), // Lighter, more distinct container
-    onPrimaryContainer = Color(0xFF001F22), // Darker for readability
+    // Primary (Yellow for actions)
+    primary = Color(0xFFE6A800), // Rich amber-yellow, better on white
+    onPrimary = Color(0xFFFFFFFF), // Still white text on buttons etc.
+    primaryContainer = Color(0xFFFFE08D), // Softer container
+    onPrimaryContainer = Color(0xFF3E2C00) // Dark text on container
+    , // Deep brown for contrast
 
-    secondary = Color(0xFF6A7D80), // Cooler, more distinct secondary
-    onSecondary = Color(0xFFFFFFFF),
-    secondaryContainer = Color(0xFFD1E3E6), // Lighter, more neutral
-    onSecondaryContainer = Color(0xFF1A2C2F), // Darker for contrast
+    // Secondary (Blue for information)
+    secondary = Color(0xFF2196F3),            // Same clear blue
+    onSecondary = Color(0xFFFFFFFF),          // White on blue
+    secondaryContainer = Color(0xFFBBDEFB),   // Light blue container
+    onSecondaryContainer = Color(0xFF002B4F), // Deep blue text/icon
 
-    tertiary = Color(0xFFCB6848), // Brighter, warmer accent for distinction
-    onTertiary = Color(0xFFFFFFFF),
-    tertiaryContainer = Color(0xFFFFD2C6), // Softer, distinct container
-    onTertiaryContainer = Color(0xFF330B00), // Darker for readability
+    // Tertiary (Green for success)
+    tertiary = Color(0xFF4CAF50),             // Same fresh green
+    onTertiary = Color(0xFFFFFFFF),           // White on green
+    tertiaryContainer = Color(0xFFC8F5C8),    // Light green container
+    onTertiaryContainer = Color(0xFF003813),  // Dark green text/icon
 
-    error = Color(0xFFB00020), // Vivid red for errors
-    onError = Color(0xFFFFFFFF),
-    errorContainer = Color(0xFFFFCDD2), // Softer error background
-    onErrorContainer = Color(0xFF3C0008),
+    // Error (Red for errors)
+    error = Color(0xFFF44336),                // Vivid red
+    onError = Color(0xFFFFFFFF),              // White text/icon
+    errorContainer = Color(0xFFFFDAD6),       // Light red background
+    onErrorContainer = Color(0xFF630005),     // Deep red text/icon
 
-    background = Color(0xFFF7F9F9), // Slightly warmer neutral
-    onBackground = Color(0xFF171A1A), // High contrast
+    // Background & Surfaces
+    background = Color(0xFFFFFFFF),           // Pure white background
+    onBackground = Color(0xFF1A1A1A),         // Deep grey/black text
 
-    surface = Color(0xFFF7F9F9), // Matches background
-    onSurface = Color(0xFF171A1A),
-    surfaceVariant = Color(0xFFD5E2E4), // Cooler variant for cards
-    onSurfaceVariant = Color(0xFF3A4647), // High contrast
+    surface = Color(0xFFF9F9F9),              // Slight off-white for surface
+    onSurface = Color(0xFF1A1A1A),            // Dark grey text on surface
 
-    outline = Color(0xFF6A7778) // Subtle, distinct outline
+    // Surface Variants & Outline
+    surfaceVariant = Color(0xFFE0E0E0),       // Light neutral grey for cards
+    onSurfaceVariant = Color(0xFF404040),     // Darker grey text/icon
+    outline = Color(0xFF757575)               // Same subtle grey for dividers
 )
+
 
 val DarkColorScheme = darkColorScheme(
     // Primary (Yellow for actions)
@@ -104,7 +113,7 @@ fun ReadStackTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = AppTypography,
         content = content
     )
 }

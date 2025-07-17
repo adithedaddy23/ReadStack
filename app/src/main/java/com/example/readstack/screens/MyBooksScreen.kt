@@ -67,7 +67,8 @@ import dev.chrisbanes.haze.hazeChild
 fun MyBooksScreen(
     navController: NavHostController,
     bookStorageViewModel: BookStorageViewModel,
-    hazeState: HazeState
+    hazeState: HazeState,
+
 ) {
     val currentlyReadingBooks by bookStorageViewModel.currentlyReadingBooks.collectAsState()
     val finishedBooks by bookStorageViewModel.finishedBooks.collectAsState()
