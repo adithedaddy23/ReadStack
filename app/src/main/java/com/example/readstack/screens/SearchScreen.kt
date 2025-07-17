@@ -195,13 +195,16 @@ fun BookDetails(data: ApiResponse, navController: NavController) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(
-            horizontal = 4.dp,
-            vertical = 8.dp,
+            start = 4.dp,
+            end = 4.dp,
+            top = 8.dp,
+            bottom = 80.dp + 24.dp
 
         ),
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier
+            .fillMaxSize()
     ) {
         items(data.docs) { book ->
             ModernBookItem(book = book, navController = navController)
@@ -215,141 +218,105 @@ fun ModernBookItem(
     modifier: Modifier = Modifier,
     navController: NavController,
 ) {
-    val hazeState = remember { HazeState() }
-
     Card(
         modifier = modifier
             .padding(2.dp)
-            .width(200.dp)
-            .height(320.dp)
+            .width(150.dp)
+            .height(240.dp)
             .clickable {
                 val cleanWorkKey = book.key?.replace("/works/", "") ?: ""
                 navController.navigate("bookDetail/$cleanWorkKey")
             },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        elevation = CardDefaults.cardElevation(6.dp),
+        colors = CardDefaults.cardColors(containerColor = Color.Transparent)
     ) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            // Background Image covering the entire card
-            val imageUrl = if (book.cover_i != null) {
-                "https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg"
-            } else null
-
-            if (imageUrl != null) {
-                val painter = rememberAsyncImagePainter(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(imageUrl)
-                        .crossfade(true)
-                        .error(R.drawable.image)
-                        .build()
-                )
-
-                Image(
-                    painter = painter,
-                    contentDescription = book.title,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(16.dp))
-                        .haze(
-                            hazeState,
-                            backgroundColor = MaterialTheme.colorScheme.background,
-                            tint = Color.Black.copy(alpha = .1f),
-                            blurRadius = 12.dp,
-                        )
-                )
-
-                // Loading state
-                if (painter.state is AsyncImagePainter.State.Loading) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(
-                                MaterialTheme.colorScheme.surface.copy(alpha = 0.9f),
-                                RoundedCornerShape(16.dp)
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            modifier = Modifier.size(24.dp),
-                            color = MaterialTheme.colorScheme.primary,
-                            strokeWidth = 2.dp
-                        )
-                    }
-                }
-                // Error state
-                else if (painter.state is AsyncImagePainter.State.Error) {
-                    ModernPlaceholderContent()
-                }
-            } else {
-                ModernPlaceholderContent()
+        Box(modifier = Modifier.fillMaxSize()) {
+            val imageUrl = book.cover_i?.let {
+                "https://covers.openlibrary.org/b/id/${it}-M.jpg"
             }
 
-            // Frosted glass overlay at the bottom
-            Box(
+            val painter = rememberAsyncImagePainter(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(imageUrl)
+                    .crossfade(true)
+                    .error(R.drawable.image)
+                    .build()
+            )
+
+            Image(
+                painter = painter,
+                contentDescription = book.title,
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(80.dp)
-                    .align(Alignment.BottomCenter)
-                    .clip(
-                        RoundedCornerShape(
-                            topStart = 0.dp,
-                            topEnd = 0.dp,
-                            bottomStart = 16.dp,
-                            bottomEnd = 16.dp
-                        )
-                    )
-                    .hazeChild(
-                        state = hazeState,
-                        shape = RoundedCornerShape(
-                            topStart = 0.dp,
-                            topEnd = 0.dp,
-                            bottomStart = 16.dp,
-                            bottomEnd = 16.dp
-                        )
-                    )
-            ) {
-                Column(
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(16.dp))
+            )
+
+            if (painter.state is AsyncImagePainter.State.Loading) {
+                Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(12.dp),
-                    horizontalAlignment = Alignment.Start,
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .background(Color.Black.copy(alpha = 0.2f), RoundedCornerShape(16.dp)),
+                    contentAlignment = Alignment.Center
                 ) {
-                    // Book Title
-                    Text(
-                        text = book.title,
-                        style = MaterialTheme.typography.titleSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            lineHeight = 16.sp
-                        ),
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(22.dp),
                         color = Color.White,
-                        maxLines = 2,
+                        strokeWidth = 2.dp
+                    )
+                }
+            }
+
+            // Gradient overlay for text readability
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f)),
+                            startY = 100f
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+            )
+
+            // Book Title and Author
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(horizontal = 12.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    text = book.title ?: "No Title",
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 13.sp,
+                        lineHeight = 18.sp
+                    ),
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                if (!book.author_name.isNullOrEmpty()) {
+                    Text(
+                        text = book.author_name.joinToString(", "),
+                        color = Color.White.copy(alpha = 0.85f),
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 11.sp,
+                            lineHeight = 14.sp
+                        ),
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-
-                    // Author Name
-                    if (!book.author_name.isNullOrEmpty()) {
-                        Text(
-                            text = book.author_name.joinToString(", "),
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Normal,
-                                letterSpacing = 0.25.sp
-                            ),
-                            color = Color.White.copy(alpha = 0.8f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
-                    }
                 }
             }
         }
     }
 }
+
 
 @Composable
 private fun ModernPlaceholderContent() {
