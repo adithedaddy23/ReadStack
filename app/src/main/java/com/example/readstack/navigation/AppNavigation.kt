@@ -4,9 +4,13 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -42,75 +46,140 @@ import com.example.readstack.viewmodel.BookStorageViewModel
 import com.example.readstack.viewmodel.BookStorageViewModelFactory
 import com.example.readstack.viewmodel.BookViewModel
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
 
 @Composable
+
 fun AppNavigation(
+
     database: ReadStackDatabase
+
 ) {
+
     val navController = rememberNavController()
+
     val bookViewModel: BookViewModel = viewModel()
+
     val hazeState = remember { HazeState() }
 
-    // Remove Scaffold and its padding to allow content to go behind bottom bar
+
+
+// Remove Scaffold and its padding to allow content to go behind bottom bar
+
     Box(modifier = Modifier
+
         .fillMaxSize()) {
+
         NavHost(
+
             navController = navController,
+
             startDestination = "my_books",
+
             modifier = Modifier.fillMaxSize()
+
         ) {
+
             composable("my_books") {
+
                 val bookStorageViewModel: BookStorageViewModel = viewModel(
+
                     factory = BookStorageViewModelFactory(
+
                         bookDao = database.bookDao()
+
                     )
+
                 )
+
                 MyBooksScreen(
+
                     navController = navController,
+
                     bookStorageViewModel = bookStorageViewModel,
+
                     hazeState = hazeState
+
                 )
+
             }
+
             composable("insights") {
+
                 AnalyticsScreen(
+
                     navController = navController,
+
                     hazeState = hazeState
+
                 )
+
             }
+
             composable("explore") {
+
                 SearchScreen(
+
                     navController = navController,
+
                     bookViewModel = bookViewModel,
+
                     hazeState = hazeState
+
                 )
+
             }
+
             composable("bookDetail/{workKey}") { backStackEntry ->
+
                 val workKey = backStackEntry.arguments?.getString("workKey") ?: ""
+
                 val bookViewModel: BookViewModel = viewModel()
+
                 val bookStorageViewModel: BookStorageViewModel = viewModel(
+
                     factory = BookStorageViewModelFactory(
+
                         bookDao = database.bookDao()
+
                     )
+
                 )
+
                 BookDetailScreen(
+
                     workKey = workKey,
+
                     bookViewModel = bookViewModel,
+
                     bookStorageViewModel = bookStorageViewModel,
+
                     navController = navController,
+
                     hazeState = hazeState
+
                 )
+
             }
+
         }
 
-        // Bottom navigation bar with frosted glass effect
+
+
+// Bottom navigation bar with frosted glass effect
+
         BottomNavigationBar(
+
             navController = navController,
+
             hazeState = hazeState,
+
             modifier = Modifier.align(Alignment.BottomCenter)
+
         )
+
     }
+
 }
 
 @Composable
@@ -143,9 +212,9 @@ fun BottomNavigationBar(
                 val selected = currentRoute == navItem.route
 
                 val iconScale by animateFloatAsState(
-                    targetValue = if (selected) 1.2f else 1.0f,
+                    targetValue = if (selected) 1.3f else 1.0f,
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        dampingRatio = Spring.DampingRatioHighBouncy,
                         stiffness = Spring.StiffnessLow
                     ),
                     label = "iconScaleAnimation"

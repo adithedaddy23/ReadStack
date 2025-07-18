@@ -41,7 +41,7 @@ fun getBottomNavItems(): List<BottomNavItem> {
         ),
         BottomNavItem(
             label = "Explore",
-            icon = IconType.Vector(Icons.Default.Search),
+            icon = IconType.Resource(painterResource(R.drawable.explore)),
             route = "explore"
         )
     )

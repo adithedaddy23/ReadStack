@@ -537,31 +537,31 @@ private fun ErrorScreen(message: String, onRetry: () -> Unit) {
     }
 }
 
-@Composable
-private fun ModernPlaceholderContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+    @Composable
+    private fun ModernPlaceholderContent() {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(400.dp)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
+            contentAlignment = Alignment.Center
         ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "No Image",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "No Cover Available",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = "No Image",
+                    tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    text = "No Cover Available",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                )
+            }
         }
     }
-}

@@ -87,7 +87,8 @@ import dev.chrisbanes.haze.hazeChild
 fun SearchScreen(
     navController: NavHostController,
     bookViewModel: BookViewModel,
-    hazeState: HazeState
+    hazeState: HazeState,
+
 ) {
     var book by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -130,7 +131,7 @@ fun SearchScreen(
                     book = newValue
                 },
                 label = {
-                    Text(text = "Search any Book")
+                        Text(text = "Search Books")
                 },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     imeAction = ImeAction.Search
@@ -370,6 +371,7 @@ fun GenreSections(genres: Map<String, List<Work>>, navController: NavController)
                     text = genre.replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.titleLarge,
                     color = MaterialTheme.colorScheme.onBackground,
+                    fontWeight = FontWeight(600),
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
 
@@ -455,52 +457,6 @@ fun GenreBookItem(work: Work, navController: NavController) {
                     )
                 }
             }
-        }
-    }
-}
-
-
-
-@Composable
-private fun ModernPlaceholderContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(
-                MaterialTheme.colorScheme.surfaceVariant,
-                RoundedCornerShape(16.dp)
-            ),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            // Modern icon with circular background
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(
-                        MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        CircleShape
-                    ),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.image),
-                    contentDescription = "No image available",
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-            Text(
-                text = "No Cover",
-                style = MaterialTheme.typography.bodySmall.copy(
-                    fontWeight = FontWeight.Medium
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
         }
     }
 }
