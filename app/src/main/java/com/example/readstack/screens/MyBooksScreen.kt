@@ -111,8 +111,10 @@ fun MyBooksScreen(
                 title = "Currently Reading",
                 books = currentlyReadingBooks,
                 onBookClick = { book ->
-                    navController.navigate("book_detail/${book.id}")
-                },
+                    val workKey = book.id.removePrefix("/works/") // e.g., "/works/OL123W" becomes "OL123W"
+                    navController.navigate("bookProgress/$workKey")
+                }
+                ,
                 icon = R.drawable.open_book,
                 color = MaterialTheme.colorScheme.primary,
                 sharedHazeState = sharedHazeState
@@ -125,8 +127,10 @@ fun MyBooksScreen(
                 title = "Want to Read",
                 books = wantToReadBooks,
                 onBookClick = { book ->
-                    navController.navigate("book_detail/${book.id}")
-                },
+                    val workKey = book.id.removePrefix("/works/") // e.g., "/works/OL123W" becomes "OL123W"
+                    navController.navigate("bookProgress/$workKey")
+                }
+                ,
                 icon = R.drawable.bookmark,
                 color = MaterialTheme.colorScheme.secondary,
                 sharedHazeState = sharedHazeState
@@ -139,8 +143,10 @@ fun MyBooksScreen(
                 title = "Finished",
                 books = finishedBooks,
                 onBookClick = { book ->
-                    navController.navigate("book_detail/${book.id}")
-                },
+                    val workKey = book.id.removePrefix("/works/") // e.g., "/works/OL123W" becomes "OL123W"
+                    navController.navigate("bookProgress/$workKey")
+                }
+                ,
                 icon = R.drawable.check,
                 color = MaterialTheme.colorScheme.tertiary,
                 sharedHazeState = sharedHazeState

@@ -1,11 +1,15 @@
 package com.example.readstack.screens
 
+import android.annotation.SuppressLint
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,272 +17,315 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import coil.compose.AsyncImagePainter
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.readstack.R
+import com.example.readstack.api.Doc
+import com.example.readstack.roomdatabase.Book
+import com.example.readstack.roomdatabase.Quote
 import com.example.readstack.viewmodel.BookStorageViewModel
 import com.example.readstack.viewmodel.BookViewModel
 import com.example.readstack.viewmodel.NetworkResponseClass
+import com.example.readstack.viewmodel.QuoteViewModel
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.haze
 import dev.chrisbanes.haze.hazeChild
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
 
+@SuppressLint("NewApi")
 @Composable
-fun MyBooksDetailsScreen(
-    workKey: String,
+fun BookProgressScreen(
+    bookId: String,
     bookStorageViewModel: BookStorageViewModel,
-    navController: NavController,
-    bookViewModel: BookViewModel,
+    quoteViewModel: QuoteViewModel,
+    navController: NavController
 ) {
-    val bookResult = bookViewModel.bookResult.collectAsState()
-    val detailResult = bookViewModel.bookDetailsResult.collectAsState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     val hazeState = remember { HazeState() }
     val scrollState = rememberScrollState()
-    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(workKey) {
-        bookViewModel.getBookDetails(workKey)
+    // State for the book data
+    val bookState = remember { mutableStateOf<Book?>(null) }
+    LaunchedEffect(bookId) {
+        val fullBookId = "/works/$bookId"
+        bookState.value = bookStorageViewModel.getBookById(fullBookId)
     }
+    val book = bookState.value
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
-    ) { paddingValues ->
+    // State to control the visibility of the Add Quote dialog
+    var showQuoteDialog by remember { mutableStateOf(false) }
+
+    if (book == null) {
+        // Show a loading indicator while the book data is being fetched
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .background(MaterialTheme.colorScheme.background)
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
         ) {
-            when(val result = detailResult.value) {
-                is com.example.readstack.api.NetworkResponseClass.loading -> {
+            CircularProgressIndicator()
+        }
+    } else {
+        // Main screen layout
+        Scaffold { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+                    .background(MaterialTheme.colorScheme.background)
+            ) {
+                // Background Cover Image with Haze effect
+                val painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(context)
+                        .data(book.coverUrl)
+                        .crossfade(true)
+                        .error(R.drawable.image)
+                        .build()
+                )
+
+                Image(
+                    painter = painter,
+                    contentDescription = book.title,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                        .haze(
+                            state = hazeState,
+                            backgroundColor = MaterialTheme.colorScheme.background,
+                            tint = Color.Black.copy(alpha = 0.3f),
+                            blurRadius = 25.dp
+                        )
+                )
+
+                // Scrollable content area
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(scrollState)
+                        .padding(top = 350.dp)
+                ) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(
-                            color = MaterialTheme.colorScheme.primary,
-                            strokeWidth = 4.dp,
-                            modifier = Modifier.size(48.dp)
-                        )
-                    }
-                }
-                is com.example.readstack.api.NetworkResponseClass.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "Something Went Wrong",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-                is com.example.readstack.api.NetworkResponseClass.Success -> {
-                    val data = result.data
-                    val coverImageUrl = data.covers?.firstOrNull()?.let {
-                        "https://covers.openlibrary.org/b/id/$it-L.jpg"
-                    }
-
-                    Column(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(scrollState)
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.65f)
+                            )
+                            .hazeChild(
+                                state = hazeState,
+                                shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                            )
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.15f),
+                                RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
+                            )
                     ) {
-                        // Cover Image Section
-                        Box(
+                        Column(
                             modifier = Modifier
+                                .padding(32.dp)
                                 .fillMaxWidth()
-                                .height(400.dp)
                         ) {
-                            if (coverImageUrl != null) {
-                                val painter = rememberAsyncImagePainter(
-                                    model = ImageRequest.Builder(LocalContext.current)
-                                        .data(coverImageUrl)
-                                        .crossfade(true)
-                                        .error(R.drawable.image)
-                                        .build()
-                                )
+                            // Book Title
+                            Text(
+                                text = book.title,
+                                style = MaterialTheme.typography.headlineLarge.copy(
+                                    fontWeight = FontWeight.ExtraBold,
+                                    fontSize = 32.sp,
+                                    lineHeight = 38.sp,
+                                    letterSpacing = (-0.5).sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 24.dp)
+                            )
 
-                                when (painter.state) {
-                                    is AsyncImagePainter.State.Loading -> {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .background(MaterialTheme.colorScheme.surface.copy(0.9f)),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            CircularProgressIndicator(
-                                                modifier = Modifier.size(32.dp),
-                                                color = MaterialTheme.colorScheme.primary,
-                                                strokeWidth = 3.dp
-                                            )
-                                        }
-                                    }
-                                    is AsyncImagePainter.State.Error -> {
-                                        ModernPlaceholderContent()
-                                    }
-                                    else -> {
-                                        Image(
-                                            painter = painter,
-                                            contentDescription = data.title ?: "Book cover",
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .haze(
-                                                    state = hazeState,
-                                                    backgroundColor = MaterialTheme.colorScheme.background,
-                                                    tint = Color.Black.copy(alpha = 0.3f),
-                                                    blurRadius = 25.dp,
-                                                )
-                                        )
-                                    }
-                                }
-                            } else {
-                                ModernPlaceholderContent()
-                            }
-                        }
-
-                        // Content Section
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                                .background(MaterialTheme.colorScheme.surface.copy(0.65f))
-                                .hazeChild(
-                                    state = hazeState,
-                                    shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-                                )
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.outline.copy(0.15f),
-                                    RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp)
-                                )
-                        ) {
-                            Column(
+                            // Action Buttons
+                            Row(
                                 modifier = Modifier
-                                    .padding(32.dp)
                                     .fillMaxWidth()
+                                    .padding(bottom = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
                             ) {
-                                // Title
-                                Text(
-                                    text = data.title ?: "No Title",
-                                    style = MaterialTheme.typography.headlineLarge.copy(
-                                        fontWeight = FontWeight.ExtraBold,
-                                        fontSize = 32.sp,
-                                        lineHeight = 38.sp,
-                                        letterSpacing = (-0.5).sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 16.dp)
-                                )
+                                // Add Quote Button
+                                Button(
+                                    onClick = { showQuoteDialog = true },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.primary,
+                                        contentColor = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                ) {
+                                    Text(
+                                        "Add Quote",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                    )
+                                }
 
-                                // Author(s)
-                                val authorNames = data.authors?.mapNotNull { author ->
-                                    author.author?.key?.let { authorKey ->
-                                        // You might want to fetch author details separately
-                                        // For now, we'll use a placeholder or the key
-                                        author.author?.key?.substringAfterLast("/") ?: "Unknown Author"
-                                    }
-                                }?.joinToString(", ") ?: "Unknown Author"
-
-                                Text(
-                                    text = "by $authorNames",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Medium,
-                                        fontSize = 20.sp,
-                                        letterSpacing = (-0.2).sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.8f),
-                                    modifier = Modifier.padding(bottom = 24.dp)
-                                )
-
-                                // Description
-                                val description = when {
-                                    data.description is String -> data.description
-                                    data.description is Map<*, *> -> {
-                                        (data.description as? Map<String, Any>)?.get("value") as? String
-                                    }
-                                    else -> null
-                                } ?: "No description available"
-
-                                Text(
-                                    text = "Description",
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    modifier = Modifier.padding(bottom = 12.dp)
-                                )
-
-                                Text(
-                                    text = description,
-                                    style = MaterialTheme.typography.bodyLarge.copy(
-                                        fontSize = 16.sp,
-                                        lineHeight = 24.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.9f),
-                                    modifier = Modifier.padding(bottom = 24.dp)
-                                )
-
+                                // Mark as Finished Button
+                                OutlinedButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            bookStorageViewModel.updateBookShelf(bookId, "finished")
+                                            Toast.makeText(context, "Marked as Finished", Toast.LENGTH_SHORT).show()
+                                            navController.popBackStack()
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.secondary)
+                                ) {
+                                    Text(
+                                        "Finished",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        ),
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
                             }
                         }
+                    }
+                    Spacer(Modifier.height(40.dp))
+                }
+
+                // Floating Back Button with Frosted Glass Effect
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, top = 16.dp),
+                    contentAlignment = Alignment.TopStart
+                ) {
+                    IconButton(
+                        onClick = { navController.popBackStack() },
+                        modifier = Modifier
+                            .background(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.4f),
+                                CircleShape
+                            )
+                            .hazeChild(
+                                state = HazeState()
+                            )
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                                shape = CircleShape
+                            )
+                            .size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Back",
+                            tint = MaterialTheme.colorScheme.onSurface
+                        )
                     }
                 }
             }
         }
-    }
-}
 
-
-@Composable
-private fun ModernPlaceholderContent() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(400.dp)
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = "No Image",
-                tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
-                modifier = Modifier.size(48.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = "No Cover Available",
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        // Add Quote Dialog
+        if (showQuoteDialog) {
+            AddQuoteDialog(
+                onDismiss = { showQuoteDialog = false },
+                onSave = { quoteText ->
+                    coroutineScope.launch {
+                        quoteViewModel.insertQuote(
+                            Quote(
+                                bookId = bookId,
+                                quoteText = quoteText,
+                                noteText = null,
+                                tags = emptyList(),
+                                timestamp = LocalDateTime.now()
+                            )
+                        )
+                        Toast.makeText(context, "Quote saved", Toast.LENGTH_SHORT).show()
+                        showQuoteDialog = false
+                    }
+                }
             )
         }
     }
+}
+
+@Composable
+fun AddQuoteDialog(onDismiss: () -> Unit, onSave: (String) -> Unit) {
+    var quoteText by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add a Quote") },
+        text = {
+            OutlinedTextField(
+                value = quoteText,
+                onValueChange = { quoteText = it },
+                label = { Text("Enter your quote") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (quoteText.isNotBlank()) {
+                        onSave(quoteText)
+                    }
+                }
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

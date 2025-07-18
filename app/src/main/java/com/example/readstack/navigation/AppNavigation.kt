@@ -40,11 +40,14 @@ import com.example.readstack.navigation.getBottomNavItems
 import com.example.readstack.roomdatabase.ReadStackDatabase
 import com.example.readstack.screens.AnalyticsScreen
 import com.example.readstack.screens.BookDetailScreen
+import com.example.readstack.screens.BookProgressScreen
 import com.example.readstack.screens.MyBooksScreen
 import com.example.readstack.screens.SearchScreen
 import com.example.readstack.viewmodel.BookStorageViewModel
 import com.example.readstack.viewmodel.BookStorageViewModelFactory
 import com.example.readstack.viewmodel.BookViewModel
+import com.example.readstack.viewmodel.QuoteViewModel
+import com.example.readstack.viewmodel.QuoteViewModelFactory
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeChild
 
@@ -161,6 +164,23 @@ fun AppNavigation(
                 )
 
             }
+            composable("bookProgress/{bookId}") { backStackEntry ->
+                val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
+                val bookStorageViewModel: BookStorageViewModel = viewModel(
+                    factory = BookStorageViewModelFactory(bookDao = database.bookDao())
+                )
+                val quoteViewModel: QuoteViewModel = viewModel(
+                    factory = QuoteViewModelFactory(database.quoteDao())
+                )
+                BookProgressScreen(
+                    bookId = bookId,
+                    bookStorageViewModel = bookStorageViewModel,
+                    quoteViewModel = quoteViewModel,
+                    navController = navController
+                )
+            }
+
+
 
         }
 

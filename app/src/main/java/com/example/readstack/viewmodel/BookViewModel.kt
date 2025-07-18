@@ -3,7 +3,6 @@ package com.example.readstack.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.readstack.api.ApiResponse
-import com.example.readstack.api.Author
 import com.example.readstack.api.BookDetailResponse
 import com.example.readstack.api.NetworkResponseClass
 import com.example.readstack.api.RetrofitInstance
@@ -21,8 +20,8 @@ class BookViewModel: ViewModel() {
     private val _bookResult = MutableStateFlow<NetworkResponseClass<ApiResponse>>(NetworkResponseClass.Error(""))
     val bookResult : StateFlow<NetworkResponseClass<ApiResponse>> = _bookResult
 
-    private val _bookDetailsResult = MutableStateFlow<NetworkResponseClass<CombinedBookDetails>>(NetworkResponseClass.Error(""))
-    val bookDetailsResult : StateFlow<NetworkResponseClass<CombinedBookDetails>> = _bookDetailsResult
+    private val _bookDetailsResult = MutableStateFlow<NetworkResponseClass<BookDetailResponse>>(NetworkResponseClass.Error(""))
+    val bookDetailsResult : StateFlow<NetworkResponseClass<BookDetailResponse>> = _bookDetailsResult
 
     private val _subjectBooks = MutableStateFlow<NetworkResponseClass<SubjectResponse>>(NetworkResponseClass.Error(""))
     val subjectBooks: StateFlow<NetworkResponseClass<SubjectResponse>> = _subjectBooks
@@ -75,7 +74,7 @@ class BookViewModel: ViewModel() {
         viewModelScope.launch {
             _bookDetailsResult.value = NetworkResponseClass.loading
             try {
-                println("DEBUG: About to fetch combined book details for workKey: $workKey")
+                println("DEBUG: About to call API with workKey: $workKey")
 
                 // Ensure the workKey starts with "/works/"
                 val formattedKey = if (!workKey.startsWith("/works/")) {
@@ -84,35 +83,11 @@ class BookViewModel: ViewModel() {
                     workKey
                 }
 
-                // Fetch both APIs concurrently
-                val detailsDeferred = async { bookApi.getBookDetails(formattedKey) }
-                val searchDeferred = async {
-                    // Extract just the work ID for search
-                    val workId = formattedKey.substringAfterLast("/")
-                    bookApi.searchBooks(workId, 1)
-                }
-
-                val details = detailsDeferred.await()
-                val searchResult = searchDeferred.await()
-
-                // Combine the data
-                val combinedData = CombinedBookDetails(
-                    key = details.key,
-                    title = details.title,
-                    description = details.description,
-                    covers = details.covers,
-                    subjects = details.subjects,
-                    firstPublishDate = null,
-                    // Get author names from search result
-                    authorNames = searchResult.docs?.firstOrNull()?.authorName ?: emptyList(),
-                    // Keep original author structure as backup
-                    authors = details.authors
-                )
-
-                println("DEBUG: Combined API calls successful")
-                _bookDetailsResult.value = NetworkResponseClass.Success(combinedData)
+                val result = bookApi.getBookDetails(formattedKey)
+                println("DEBUG: API call successful")
+                _bookDetailsResult.value = NetworkResponseClass.Success(result)
             } catch (e: Exception) {
-                println("DEBUG: Combined API calls failed with exception: ${e.javaClass.simpleName}")
+                println("DEBUG: API call failed with exception: ${e.javaClass.simpleName}")
                 println("DEBUG: Error message: ${e.message}")
                 e.printStackTrace()
 
@@ -169,15 +144,3 @@ class BookViewModel: ViewModel() {
         }
     }
 }
-
-// Data class to hold combined information from both APIs
-data class CombinedBookDetails(
-    val key: String?,
-    val title: String?,
-    val description: Any?, // Can be String or Map
-    val covers: List<Int>?,
-    val subjects: List<String>?,
-    val firstPublishDate: String?,
-    val authorNames: List<String>, // From search API
-    val authors: List<Author>? // From details API as backup
-)

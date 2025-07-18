@@ -120,6 +120,21 @@ class BookStorageViewModel(
             }
         }
     }
+    suspend fun getBookById(bookId: String): Book? {
+        return bookDao.getBookById(bookId)
+    }
+
+    fun updateBookProgress(bookId: String, totalPages: Int?, pagesRead: Int?) {
+        viewModelScope.launch {
+            val book = bookDao.getBookById(bookId) ?: return@launch
+            val updated = book.copy(
+                totalPages = totalPages ?: book.totalPages,
+                currentPage = pagesRead ?: book.currentPage,
+                updatedAt = System.currentTimeMillis()
+            )
+            bookDao.updateBook(updated)
+        }
+    }
 
 }
 
