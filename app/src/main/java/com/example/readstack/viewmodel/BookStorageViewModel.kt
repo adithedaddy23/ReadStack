@@ -7,6 +7,7 @@ import com.example.readstack.api.BookApi
 import com.example.readstack.api.RetrofitInstance
 import com.example.readstack.roomdatabase.Book
 import com.example.readstack.roomdatabase.BookDao
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -134,6 +135,10 @@ class BookStorageViewModel(
             )
             bookDao.updateBook(updated)
         }
+    }
+
+    fun getBookFlow(bookId: String): Flow<Book?> {
+        return bookDao.getBookFlow(bookId) // This should return a Flow that emits whenever the book data changes
     }
 
 }

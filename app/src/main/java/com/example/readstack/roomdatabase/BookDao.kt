@@ -24,4 +24,7 @@ interface BookDao {
 
     @Query("SELECT * FROM books WHERE shelf = 'finished' AND strftime('%Y-%m', datetime(updatedAt/1000, 'unixepoch')) = strftime('%Y-%m', 'now')")
     suspend fun getBooksReadThisMonth(): List<Book>
+
+    @Query("SELECT * FROM books WHERE id = :bookId")
+    fun getBookFlow(bookId: String): Flow<Book?>
 }
