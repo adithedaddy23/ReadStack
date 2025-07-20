@@ -7,7 +7,6 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-
 @Dao
 interface QuoteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -28,4 +27,9 @@ interface QuoteDao {
     @Query("SELECT * FROM quotes ORDER BY timestamp DESC")
     fun getAllQuotes(): Flow<List<Quote>>
 
+    @Query("SELECT COUNT(*) FROM quotes")
+    suspend fun getTotalQuotesCount(): Int
+
+    @Query("SELECT * FROM quotes WHERE tags LIKE '%' || :tag || '%' ORDER BY timestamp DESC")
+    fun getQuotesByTag(tag: String): Flow<List<Quote>>
 }

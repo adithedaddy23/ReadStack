@@ -1,5 +1,7 @@
 package com.example.readstack.roomdatabase
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
@@ -16,11 +18,26 @@ data class Quote(
     val timestamp: LocalDateTime
 )
 
+@TypeConverters(TagsConverter::class, LocalDateTimeConverter::class)
 class TagsConverter {
     @TypeConverter
     fun fromList(tags: List<String>): String = tags.joinToString(",")
 
     @TypeConverter
     fun toList(tagsString: String): List<String> = tagsString.split(",").filter { it.isNotBlank() }
+}
+
+// You'll also need a LocalDateTime converter
+class LocalDateTimeConverter {
+    @RequiresApi(Build.VERSION_CODES.O)
+    @TypeConverter
+    fun fromTimestamp(value: String?): LocalDateTime? {
+        return value?.let { LocalDateTime.parse(it) }
+    }
+
+    @TypeConverter
+    fun dateToTimestamp(date: LocalDateTime?): String? {
+        return date?.toString()
+    }
 }
 

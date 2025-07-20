@@ -1,5 +1,6 @@
 package com.example.readstack.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -139,6 +140,21 @@ class BookStorageViewModel(
 
     fun getBookFlow(bookId: String): Flow<Book?> {
         return bookDao.getBookFlow(bookId) // This should return a Flow that emits whenever the book data changes
+    }
+
+    suspend fun getPagesReadThisMonth(): Int {
+        return bookDao.getPagesReadThisMonth() ?: 0
+    }
+
+    suspend fun getTotalPagesReadTillNow(): Int {
+        return bookDao.getTotalPagesReadTillNow() ?: 0
+    }
+
+    suspend fun getTotalBooksRead(): Int {
+        return bookDao.getTotalBooksRead()
+    }
+    suspend fun getBooksReadThisMonth(): List<Book> {
+        return bookDao.getBooksReadThisMonth()
     }
 
 }

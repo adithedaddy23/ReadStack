@@ -107,13 +107,23 @@ fun AppNavigation(
 
             }
 
-            composable("insights") {
+            composable("insights/{bookId}") { backStackEntry ->
+                val bookId = backStackEntry.arguments?.getString("bookId") ?: return@composable
+                val bookStorageViewModel: BookStorageViewModel = viewModel(
+                    factory = BookStorageViewModelFactory(bookDao = database.bookDao())
+                )
+                val quoteViewModel: QuoteViewModel = viewModel(
+                    factory = QuoteViewModelFactory(database.quoteDao())
+                )
 
                 AnalyticsScreen(
 
                     navController = navController,
 
-                    hazeState = hazeState
+                    hazeState = hazeState,
+                    bookId = bookId,
+                    bookStorageViewModel = bookStorageViewModel,
+                    quoteViewModel = quoteViewModel,
 
                 )
 
@@ -214,7 +224,7 @@ fun BottomNavigationBar(
     val bottomNavItems = getBottomNavItems()
 
     // This condition ensures the bottom bar only shows on specific screens
-    if (currentRoute in listOf("my_books", "insights", "explore")) {
+    if (currentRoute in listOf("my_books", "insights/{bookId}", "explore")) {
         NavigationBar(
             modifier = modifier
                 .hazeChild(
@@ -234,7 +244,7 @@ fun BottomNavigationBar(
                 val iconScale by animateFloatAsState(
                     targetValue = if (selected) 1.3f else 1.0f,
                     animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioHighBouncy,
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
                         stiffness = Spring.StiffnessLow
                     ),
                     label = "iconScaleAnimation"

@@ -71,6 +71,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-navigation-animation:0.34.0")
     implementation(libs.androidx.ui.text.google.fonts) // or latest version
 
+    // build.gradle.kts
+    implementation("androidx.compose.foundation:foundation:1.7.0-beta01") // Or the latest stable version
+
 
     val room_version = "2.7.2"
 

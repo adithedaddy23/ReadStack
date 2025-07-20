@@ -37,7 +37,7 @@ fun getBottomNavItems(): List<BottomNavItem> {
         BottomNavItem(
             label = "Insights",
             icon = IconType.Resource(painterResource(R.drawable.idea)),
-            route = "insights"
+            route = "insights/{bookId}"
         ),
         BottomNavItem(
             label = "Explore",
