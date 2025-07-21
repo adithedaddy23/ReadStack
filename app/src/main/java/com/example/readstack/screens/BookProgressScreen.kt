@@ -26,8 +26,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -95,6 +97,12 @@ fun BookProgressScreen(
     val coroutineScope = rememberCoroutineScope()
     val hazeState = remember { HazeState() }
     val scrollState = rememberScrollState()
+
+    var showEditQuoteDialog by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    var selectedQuote by remember { mutableStateOf<Quote?>(null) }
+
+    var showDeleteBookDialog by remember { mutableStateOf(false) }
 
 
     // Add SnackbarHostState
@@ -403,11 +411,14 @@ fun BookProgressScreen(
                                 OutlinedButton(
                                     onClick = {
                                         coroutineScope.launch {
-                                            bookStorageViewModel.updateBookShelf(bookId, "finished")
+                                            // Use the fullBookId (which includes "/works/") instead of just bookId
+                                            bookStorageViewModel.updateBookShelf(fullBookId, "finished")
                                             snackbarHostState.showSnackbar(
                                                 message = "Marked as Finished",
                                                 duration = SnackbarDuration.Short
                                             )
+                                            // Add a small delay before navigating back to ensure the update is processed
+                                            kotlinx.coroutines.delay(500)
                                             navController.popBackStack()
                                         }
                                     },
@@ -423,6 +434,79 @@ fun BookProgressScreen(
                                             fontWeight = FontWeight.SemiBold
                                         ),
                                         color = MaterialTheme.colorScheme.tertiary
+                                    )
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 24.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                // Favorite Button
+                                OutlinedButton(
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            val newFavoriteStatus = !(book!!.isFavorite)
+                                            bookStorageViewModel.toggleBookFavorite(fullBookId, newFavoriteStatus)
+                                            val message = if (newFavoriteStatus) "Added to favorites" else "Removed from favorites"
+                                            snackbarHostState.showSnackbar(
+                                                message = message,
+                                                duration = SnackbarDuration.Short
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(
+                                        1.dp,
+                                        if (book!!.isFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.outline
+                                    ),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = if (book!!.isFavorite) Color(0xFFE91E63).copy(alpha = 0.1f) else Color.Transparent,
+                                        contentColor = if (book!!.isFavorite) Color(0xFFE91E63) else MaterialTheme.colorScheme.onSurface
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = if (book!!.isFavorite) Icons.Filled.Favorite else Icons.Outlined.FavoriteBorder,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+//                                    Text(
+//                                        text = if (book!!.isFavorite) "Liked" else "Like",
+//                                        style = MaterialTheme.typography.titleMedium.copy(
+//                                            fontWeight = FontWeight.SemiBold
+//                                        )
+//                                    )
+                                }
+
+                                // Remove Book Button
+                                OutlinedButton(
+                                    onClick = { showDeleteBookDialog = true },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(52.dp),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        contentColor = MaterialTheme.colorScheme.error
+                                    )
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Delete,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        "Remove",
+                                        style = MaterialTheme.typography.titleMedium.copy(
+                                            fontWeight = FontWeight.SemiBold
+                                        )
                                     )
                                 }
                             }
@@ -465,7 +549,17 @@ fun BookProgressScreen(
                                     verticalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
                                     quotes.forEach { quote ->
-                                        QuoteCard(quote = quote)
+                                        QuoteCard(
+                                            quote = quote,
+                                            onEditClick = { clickedQuote ->
+                                                selectedQuote = clickedQuote
+                                                showEditQuoteDialog = true
+                                            },
+                                            onDeleteClick = { clickedQuote ->
+                                                selectedQuote = clickedQuote
+                                                showDeleteDialog = true
+                                            }
+                                        )
                                     }
                                 }
                             }
@@ -579,7 +673,266 @@ fun BookProgressScreen(
                 }
             )
         }
+        // Edit Quote Dialog
+        if (showEditQuoteDialog && selectedQuote != null) {
+            EditQuoteDialog(
+                quote = selectedQuote!!,
+                onDismiss = {
+                    showEditQuoteDialog = false
+                    selectedQuote = null
+                },
+                onSave = { updatedQuoteText ->
+                    showEditQuoteDialog = false
+
+                    coroutineScope.launch {
+                        try {
+                            snackbarHostState.showSnackbar(
+                                message = "Updating quote...",
+                                duration = SnackbarDuration.Short
+                            )
+
+                            launch(Dispatchers.IO) {
+                                quoteViewModel.updateQuote(
+                                    selectedQuote!!.copy(
+                                        quoteText = updatedQuoteText,
+                                        timestamp = LocalDateTime.now()
+                                    )
+                                )
+                            }.join()
+
+                            snackbarHostState.showSnackbar(
+                                message = "Quote updated successfully",
+                                duration = SnackbarDuration.Short
+                            )
+                        } catch (e: Exception) {
+                            snackbarHostState.showSnackbar(
+                                message = "Failed to update quote",
+                                duration = SnackbarDuration.Short
+                            )
+                        } finally {
+                            selectedQuote = null
+                        }
+                    }
+                }
+            )
+        }
+
+// Delete Confirmation Dialog
+        if (showDeleteDialog && selectedQuote != null) {
+            AlertDialog(
+                onDismissRequest = {
+                    showDeleteDialog = false
+                    selectedQuote = null
+                },
+                title = {
+                    Text(
+                        text = "Delete Quote",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                },
+                text = {
+                    Text(
+                        text = "Are you sure you want to delete this quote? This action cannot be undone.",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+
+                            coroutineScope.launch {
+                                try {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Deleting quote...",
+                                        duration = SnackbarDuration.Short
+                                    )
+
+                                    launch(Dispatchers.IO) {
+                                        quoteViewModel.deleteQuote(selectedQuote!!)
+                                    }.join()
+
+                                    snackbarHostState.showSnackbar(
+                                        message = "Quote deleted successfully",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Failed to delete quote",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                } finally {
+                                    selectedQuote = null
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteDialog = false
+                            selectedQuote = null
+                        }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
+
+        // Delete Book Confirmation Dialog
+        if (showDeleteBookDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteBookDialog = false },
+                title = {
+                    Text(
+                        text = "Remove Book",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.error
+                    )
+                },
+                text = {
+                    Column {
+                        Text(
+                            text = "Are you sure you want to remove \"${book!!.title}\" from your library?",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "This will permanently delete:",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
+                        )
+                        Text(
+                            text = "• All reading progress\n• All saved quotes\n• All book data",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "This action cannot be undone.",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            showDeleteBookDialog = false
+                            coroutineScope.launch {
+                                try {
+                                    // First delete all quotes associated with this book
+                                    // You'll need to add this method to QuoteViewModel
+                                    quoteViewModel.deleteAllQuotesForBook(bookId)
+
+                                    // Then delete the book
+                                    bookStorageViewModel.deleteBook(fullBookId)
+
+                                    snackbarHostState.showSnackbar(
+                                        message = "Book removed successfully",
+                                        duration = SnackbarDuration.Short
+                                    )
+
+                                    // Navigate back after a short delay
+                                    kotlinx.coroutines.delay(500)
+                                    navController.popBackStack()
+                                } catch (e: Exception) {
+                                    snackbarHostState.showSnackbar(
+                                        message = "Failed to remove book",
+                                        duration = SnackbarDuration.Short
+                                    )
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) {
+                        Text("Remove Book")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { showDeleteBookDialog = false }
+                    ) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun EditQuoteDialog(
+    quote: Quote,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit
+) {
+    var quoteText by remember { mutableStateOf(quote.quoteText) }
+    var isTextEmpty by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = "Edit Quote",
+                style = MaterialTheme.typography.headlineSmall.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        },
+        text = {
+            Column {
+                OutlinedTextField(
+                    value = quoteText,
+                    onValueChange = {
+                        quoteText = it
+                        isTextEmpty = it.trim().isEmpty()
+                    },
+                    label = { Text("Quote") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(150.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    isError = isTextEmpty,
+                    supportingText = if (isTextEmpty) {
+                        { Text("Quote cannot be empty") }
+                    } else null
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (quoteText.trim().isNotEmpty()) {
+                        onSave(quoteText.trim())
+                    } else {
+                        isTextEmpty = true
+                    }
+                },
+                enabled = quoteText.trim().isNotEmpty()
+            ) {
+                Text("Save")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable
@@ -817,7 +1170,7 @@ fun QuoteCard(
                             imageVector = Icons.Outlined.Edit,
                             contentDescription = "Edit quote",
                             modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            tint = MaterialTheme.colorScheme.secondary.copy(alpha = 0.6f)
                         )
                     }
 

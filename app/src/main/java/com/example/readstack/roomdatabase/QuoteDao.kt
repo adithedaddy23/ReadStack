@@ -32,4 +32,9 @@ interface QuoteDao {
 
     @Query("SELECT * FROM quotes WHERE tags LIKE '%' || :tag || '%' ORDER BY timestamp DESC")
     fun getQuotesByTag(tag: String): Flow<List<Quote>>
+
+    @Query("DELETE FROM quotes WHERE bookId = :bookId")
+    suspend fun deleteAllQuotesForBook(bookId: String)
+
+
 }

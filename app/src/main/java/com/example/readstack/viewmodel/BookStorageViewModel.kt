@@ -66,6 +66,13 @@ class BookStorageViewModel(
             initialValue = emptyList()
         )
 
+    val favoriteBooks: StateFlow<List<Book>> = bookDao.getFavoriteBooks()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
     fun saveBookFromApi(workKey: String, shelf: String) {
         viewModelScope.launch {
             try {
@@ -86,7 +93,8 @@ class BookStorageViewModel(
                     coverUrl = response.covers?.firstOrNull()?.let { "https://covers.openlibrary.org/b/id/$it-L.jpg" },
                     shelf = shelf,
                     currentPage = 0,
-                    updatedAt = System.currentTimeMillis()
+                    updatedAt = System.currentTimeMillis(),
+                    isFavorite = false
                 )
 
                 // Insert or update book in database
@@ -122,6 +130,32 @@ class BookStorageViewModel(
             }
         }
     }
+
+    // DELETE BOOK FUNCTIONALITY
+    fun deleteBook(bookId: String) {
+        viewModelScope.launch {
+            try {
+                bookDao.deleteBookById(bookId)
+                _storageResult.value = BookStorageResult(BookStorageResult.Status.SUCCESS, "Book deleted successfully")
+            } catch (e: Exception) {
+                _storageResult.value = BookStorageResult(BookStorageResult.Status.ERROR, "Failed to delete book: ${e.message}")
+            }
+        }
+    }
+
+    // FAVORITES FUNCTIONALITY
+    fun toggleBookFavorite(bookId: String, isFavorite: Boolean) {
+        viewModelScope.launch {
+            try {
+                bookDao.updateBookFavoriteStatus(bookId, isFavorite)
+                val message = if (isFavorite) "Added to favorites" else "Removed from favorites"
+                _storageResult.value = BookStorageResult(BookStorageResult.Status.SUCCESS, message)
+            } catch (e: Exception) {
+                _storageResult.value = BookStorageResult(BookStorageResult.Status.ERROR, "Failed to update favorite: ${e.message}")
+            }
+        }
+    }
+
     suspend fun getBookById(bookId: String): Book? {
         return bookDao.getBookById(bookId)
     }

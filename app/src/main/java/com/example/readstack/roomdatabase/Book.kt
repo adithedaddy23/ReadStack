@@ -10,7 +10,7 @@ data class Book(
     val coverUrl: String?,
     val shelf: String,
     val currentPage: Int = 0,
-    val updatedAt: Long = System.currentTimeMillis(),
     val totalPages: Int? = null,
-
-    )
+    val updatedAt: Long = System.currentTimeMillis(),
+    val isFavorite: Boolean = false
+)

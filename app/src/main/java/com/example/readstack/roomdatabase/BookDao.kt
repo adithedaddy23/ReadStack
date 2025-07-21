@@ -1,6 +1,7 @@
 package com.example.readstack.roomdatabase
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -27,11 +28,24 @@ interface BookDao {
     @Query("SELECT * FROM books WHERE id = :bookId")
     fun getBookFlow(bookId: String): Flow<Book?>
 
-    // Fixed: Sum ALL currentPages from ALL books (not just finished ones)
+    // DELETE FUNCTIONALITY
+    @Delete
+    suspend fun deleteBook(book: Book)
+
+    @Query("DELETE FROM books WHERE id = :bookId")
+    suspend fun deleteBookById(bookId: String)
+
+    // FAVORITES FUNCTIONALITY
+    @Query("SELECT * FROM books WHERE isFavorite = 1")
+    fun getFavoriteBooks(): Flow<List<Book>>
+
+    @Query("UPDATE books SET isFavorite = :isFavorite WHERE id = :bookId")
+    suspend fun updateBookFavoriteStatus(bookId: String, isFavorite: Boolean)
+
+    // Existing queries...
     @Query("SELECT SUM(currentPage) FROM books WHERE currentPage > 0")
     suspend fun getTotalPagesReadTillNow(): Int?
 
-    // Fixed: Sum currentPages for books updated this month (any shelf)
     @Query("""
         SELECT SUM(currentPage) FROM books 
         WHERE currentPage > 0 
@@ -39,7 +53,6 @@ interface BookDao {
     """)
     suspend fun getPagesReadThisMonth(): Int?
 
-    // Alternative: If you only want to count pages from finished books
     @Query("SELECT SUM(currentPage) FROM books WHERE shelf = 'finished' AND currentPage > 0")
     suspend fun getTotalPagesFromFinishedBooks(): Int?
 

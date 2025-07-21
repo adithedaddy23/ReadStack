@@ -8,7 +8,7 @@ import androidx.room.TypeConverters
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.internal.synchronized
 
-@Database(entities = [Book::class, ReadingSession::class, Quote::class], version = 3, exportSchema = false)
+@Database(entities = [Book::class, ReadingSession::class, Quote::class], version = 4, exportSchema = false)
 @TypeConverters(TagsConverter::class, DateTimeConverter::class)
 abstract class ReadStackDatabase : RoomDatabase() {
     abstract fun bookDao(): BookDao

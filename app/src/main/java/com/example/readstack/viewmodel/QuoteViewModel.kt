@@ -1,6 +1,7 @@
 package com.example.readstack.viewmodel
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -77,14 +78,24 @@ class QuoteViewModel(private val quoteDao: QuoteDao) : ViewModel() {
         allQuotes.shuffled().take(count)
     }
 
-    // Make deleteQuote suspend function for consistency
-    suspend fun deleteQuote(quote: Quote) = withContext(Dispatchers.IO) {
+    suspend fun updateQuote(quote: Quote) {
+        quoteDao.updateQuote(quote)
+    }
+
+    suspend fun deleteQuote(quote: Quote) {
         quoteDao.deleteQuote(quote)
     }
 
-    // Make updateQuote suspend function for consistency
-    suspend fun updateQuote(quote: Quote) = withContext(Dispatchers.IO) {
-        quoteDao.updateQuote(quote)
+    suspend fun deleteAllQuotesForBook(bookId: String) {
+        viewModelScope.launch {
+            try {
+                // You'll need to add this method to your QuoteDao as well
+                quoteDao.deleteAllQuotesForBook(bookId)
+            } catch (e: Exception) {
+                // Handle error if needed
+                Log.e("QuoteViewModel", "Error deleting quotes for book $bookId", e)
+            }
+        }
     }
 
     // Create quote with current timestamp
