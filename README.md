@@ -48,8 +48,6 @@
 
 ## 📸 Screenshots
 
-## 📸 Screenshots
-
 <table>
   <tr>
     <td><img width="400" src="https://github.com/user-attachments/assets/09246571-3381-4a5f-84e0-a5095c8e194b" alt="Screenshot 1" /></td>
@@ -61,6 +59,13 @@
     <td><img width="400" src="https://github.com/user-attachments/assets/e9c8dbfa-fa55-4b1d-92cd-445020250660" alt="Screenshot 5" /></td>
   </tr>
 </table>
+
+---
+
+## 🙏 Acknowledgements
+
+- Huge thanks to [Chris Banes](https://github.com/chrisbanes) for the beautiful [Haze](https://github.com/chrisbanes/haze) library, which helped give ReadStack a modern and smooth visual experience.
+
 
 
 
