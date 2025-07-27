@@ -48,14 +48,12 @@
 
 ## 📸 Screenshots
 
-*(Add screenshots here)*  
-You can use Markdown like:  
-```markdown
-![Home Screen](screenshots/home.png)<img width="1080" height="2215" alt="Screenshot_20250727_230817_ReadStack" src="https://github.com/user-attachments/assets/8ee98294-725b-4ae0-a62d-0b4996f3273a" />
-<img width="1080" height="2254" alt="Screenshot_20250727_230416_ReadStack" src="https://github.com/user-attachments/assets/ed7be6f4-94ac-4aed-af02-c023c3627c59" />
-<img width="1080" height="2215" alt="Screenshot_20250727_230720_ReadStack" src="https://github.com/user-attachments/assets/10e23e46-73a0-475d-b154-ad26a8897b7a" />
-<img width="1080" height="2215" alt="Screenshot_20250727_230835_ReadStack" src="https://github.com/user-attachments/assets/e323df0d-ad98-4a8a-85be-3990d7c8d40f" />
-<img width="1080" height="2215" alt="Screenshot_20250727_230750_ReadStack" src="https://github.com/user-attachments/assets/3c167033-1cab-47a7-8c08-0032aa988f00" />
+<img width="1080" height="2254" alt="Screenshot_20250727_230416_ReadStack" src="https://github.com/user-attachments/assets/09246571-3381-4a5f-84e0-a5095c8e194b" />
+<img width="1080" height="2215" alt="Screenshot_20250727_230720_ReadStack" src="https://github.com/user-attachments/assets/444b5704-9758-4a62-8838-ef337de20225" />
+<img width="1080" height="2215" alt="Screenshot_20250727_230835_ReadStack" src="https://github.com/user-attachments/assets/00844323-9ead-4ef9-8e7a-8bb14e98a7a9" />
+<img width="1080" height="2215" alt="Screenshot_20250727_230750_ReadStack" src="https://github.com/user-attachments/assets/11ee60a0-5277-43db-b569-2e7626e5c152" />
+<img width="1080" height="2215" alt="Screenshot_20250727_230817_ReadStack" src="https://github.com/user-attachments/assets/e9c8dbfa-fa55-4b1d-92cd-445020250660" />
+
 
 
 
