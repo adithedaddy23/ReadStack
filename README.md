@@ -2,10 +2,6 @@
 
 **ReadStack** is a minimalist Android app built with **Kotlin** and **Jetpack Compose** that helps users track their reading journey, log quotes, discover new books, and build consistent reading habits.
 
-<p align="center">
-  <img src="preview-image-or-gif-url" alt="App Preview" width="500"/>
-</p>
-
 ---
 
 ## 🚀 Features
