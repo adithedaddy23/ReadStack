@@ -50,11 +50,11 @@
 
 <table>
   <tr>
-    <td><img width="300" src="https://github.com/user-attachments/assets/09246571-3381-4a5f-84e0-a5095c8e194b" alt="Screenshot 1" /></td>
-    <td><img width="300" src="https://github.com/user-attachments/assets/444b5704-9758-4a62-8838-ef337de20225" alt="Screenshot 2" /></td>
-    <td><img width="300" src="https://github.com/user-attachments/assets/00844323-9ead-4ef9-8e7a-8bb14e98a7a9" alt="Screenshot 3" /></td>
-    <td><img width="300" src="https://github.com/user-attachments/assets/11ee60a0-5277-43db-b569-2e7626e5c152" alt="Screenshot 4" /></td>
-    <td><img width="300" src="https://github.com/user-attachments/assets/e9c8dbfa-fa55-4b1d-92cd-445020250660" alt="Screenshot 5" /></td>
+    <td><img width="500" src="https://github.com/user-attachments/assets/09246571-3381-4a5f-84e0-a5095c8e194b" alt="Screenshot 1" /></td>
+    <td><img width="500" src="https://github.com/user-attachments/assets/444b5704-9758-4a62-8838-ef337de20225" alt="Screenshot 2" /></td>
+    <td><img width="500" src="https://github.com/user-attachments/assets/00844323-9ead-4ef9-8e7a-8bb14e98a7a9" alt="Screenshot 3" /></td>
+    <td><img width="500" src="https://github.com/user-attachments/assets/11ee60a0-5277-43db-b569-2e7626e5c152" alt="Screenshot 4" /></td>
+    <td><img width="500" src="https://github.com/user-attachments/assets/e9c8dbfa-fa55-4b1d-92cd-445020250660" alt="Screenshot 5" /></td>
   </tr>
 </table>
 
